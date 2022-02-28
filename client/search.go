@@ -2,12 +2,12 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -19,8 +19,22 @@ const (
 	TrackSearch
 )
 
+var lg *log.Logger = log.New(os.Stdout, "", log.Ltime)
+
 func (st SearchType) String() string {
 	return [...]string{"genre", "artist", "track"}[st]
+}
+func ToSearchType(st string) SearchType {
+	switch st {
+	case "genre":
+		return GenreSearch
+	case "artist":
+		return ArtistSearch
+	case "track":
+		return TrackSearch
+	default:
+		return ArtistSearch
+	}
 }
 
 type SearchResponse struct {
@@ -59,9 +73,11 @@ func encodeQueryStr(query string, st SearchType) string {
 	query = strings.Trim(query, " ")
 
 	// if query has internal whitespace, enclose in quotations
-	if strings.ContainsAny(query, " ") {
-		query = fmt.Sprintf("\"%s\"", query)
-	}
+	/*
+		if strings.ContainsAny(query, " ") {
+			query = fmt.Sprintf("\"%s\"", query)
+		}
+	*/
 
 	// if we are searching by genre, convert to lowercase and add genre field filter
 	if st == GenreSearch {
@@ -94,32 +110,32 @@ func (c *SpotifyClient) newSearchRequest(query string, st SearchType, limit int,
 	return req
 }
 
-func (sc *SpotifyClient) Search(query string, st SearchType, limit int, offset int) error {
+func (sc *SpotifyClient) Search(query string, st SearchType, limit int, offset int) (*SearchResponse, error) {
 	if sc.shouldRefresh() {
 		sc.authorize()
 	}
 
 	req := sc.newSearchRequest(query, st, limit, offset)
+	lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", req.Method, req.URL)
 	res, err := sc.hc.Do(req)
 	if err != nil {
-		fmt.Println(errors.New("search: search request failed"))
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	sr := new(SearchResponse)
 	sr.FromJSON(res.Body)
-	sr.PrintJSON(log.Writer())
 
-	return nil
+	return sr, nil
 }
 
 type Artists struct {
-	Href   string  `json:"href"`
-	Items  []*Item `json:"items"`
-	Next   string  `json:"next"`
-	Limit  int     `json:"limit"`
-	Offset int     `json:"offset"`
-	Total  int     `json:"total"`
+	Href   string `json:"href"`
+	Items  []Item `json:"items"`
+	Next   string `json:"next"`
+	Limit  int    `json:"limit"`
+	Offset int    `json:"offset"`
+	Total  int    `json:"total"`
 }
 
 type Item struct {
