@@ -86,7 +86,6 @@ var lg *log.Logger = log.New(os.Stdout, "", log.Ltime)
 // adds the genre field filter
 func encodeQueryStr(query string, st SearchType) string {
 	query = strings.Trim(query, " ")
-
 	// if query has internal whitespace, enclose in quotations
 	/*
 		if strings.ContainsAny(query, " ") {
@@ -114,7 +113,6 @@ func (sc *SpotifyClient) Search(query string, st SearchType, limit int, offset i
 	}
 
 	lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", req.Method, req.URL)
-	lg.Println(req.Header["Authorization"])
 	res, err := sc.Do(req)
 	if err != nil {
 		return nil, err
@@ -123,7 +121,6 @@ func (sc *SpotifyClient) Search(query string, st SearchType, limit int, offset i
 
 	sr := new(SearchResponse)
 	sr.FromJSON(res.Body)
-	fmt.Println(sr)
 
 	return sr, nil
 }

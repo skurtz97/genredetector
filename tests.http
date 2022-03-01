@@ -3,17 +3,12 @@
 
 
 
-
-### SINGLE WORD WITH QUOTES GENRE SEARCH                    ERROR: NILL POINTER
-GET {{SEARCH_URL}}q=genre:"soft rock"&type=artist HTTP/2.0             
-Content-Type: application/json
-
 ### EXTRA WHITESPACE WITH QUOTES GENRE SEARCH               ERROR: NILL POINTER
-GET {{SEARCH_URL}}q=genre:"  rock    "&type=artist HTTP/2.0
+GET http://localhost:8080/searchasync?q=genre:rock&type=artist HTTP/2.0
 Content-Type: application/json
 
 ### EXTRA WHITESPACE WITH QUOTES MULTIPLE WORDS             GOOD
-GET {{SEARCH_URL}}q=genre:" soft rock    "&type=artist HTTP/2.0
+GET http://localhost:8080/searchasync?q=genre:"soft rock"&type=artist HTTP/2.0
 Content-Type: application/json
 
 ### SINGLE WORD NO QUOTES                                   ERROR: NILL POINTER
