@@ -1,34 +1,37 @@
 @SEARCH_URL = http://localhost:8080/search?
-@PROTOCOL = HTTP/1.1
+@PROTOCOL = HTTP/2.0
 
-# MULTIPLE WORD GENRE SEARCH 
-GET {{SEARCH_URL}}q=genre:"soft rock"&type=artist 
+### MULTIPLE WORD GENRE SEARCH                                    
+GET {{SEARCH_URL}}q=genre:"soft rock"&type=artist HTTP/2.0
 Content-Type: application/json
 
-# SINGLE WORD WITH QUOTES GENRE SEARCH 
-GET {{SEARCH_URL}}q="rock"&type=artist HTTP/1.1
+### SINGLE WORD WITH QUOTES GENRE SEARCH                    ERROR: NILL POINTER
+GET {{SEARCH_URL}}q="rock"&type=artist HTTP/2.0             
 Content-Type: application/json
 
-# EXTRA WHITESPACE WITH QUOTES GENRE SEARCH 
-GET {{SEARCH_URL}}q=genre:"  rock    "&type=artist HTTP/1.1
+### EXTRA WHITESPACE WITH QUOTES GENRE SEARCH               ERROR: NILL POINTER
+GET {{SEARCH_URL}}q=genre:"  rock    "&type=artist HTTP/2.0
 Content-Type: application/json
 
-# EXTRA WHITESPACE WITH QUOTES MULTIPLE WORDS
-GET {{SEARCH_URL}}q=genre:" soft rock    "&type=artist HTTP/1.1
+### EXTRA WHITESPACE WITH QUOTES MULTIPLE WORDS             GOOD
+GET {{SEARCH_URL}}q=genre:" soft rock    "&type=artist HTTP/2.0
 Content-Type: application/json
 
-# SINGLE WORD NO QUOTES
-GET {{SEARCH_URL}}q=genre:rock&type=artist HTTP/1.1
+### SINGLE WORD NO QUOTES                                   ERROR: NILL POINTER
+GET {{SEARCH_URL}}q=genre:rock&type=artist HTTP/2.0
 Content-Type: application/json
 
-# SINGLE WORD NO QUOTES EXTRA WHITESPACE
-GET {{SEARCH_URL}}q=genre: rock   &type=artist HTTP/1.1
+### SINGLE WORD NO QUOTES EXTRA WHITESPACE                  ERROR: NILL POINTER
+GET {{SEARCH_URL}}q=genre: rock   &type=artist HTTP/2.0
 Content-Type: application/json
 
-# MULTIPLE WORD NO QUOTES
-GET {{SEARCH_URL}}q=genre:soft rock &type=artist HTTP/1.1
+### MULTIPLE WORD NO QUOTES
+GET {{SEARCH_URL}}q=genre:soft rock &type=artist HTTP/2.0
 Content-Type: application/json
 
-# MULTIPLE WORD NO QUOTES EXTRA WHITESPACE
-GET {{SEARCH_URL}}q=genre:   soft  rock   &type=artist HTTP/1.1
+### MULTIPLE WORD NO QUOTES EXTRA WHITESPACE
+GET {{SEARCH_URL}}q=genre:   soft  rock   &type=artist HTTP/2.0
 Content-Type: application/json
+
+
+# OVERFLOW WHENEVER WE SEARCH FOR A LARGER GENRE, NEED TO USE OFFSET/TOTAL AND NOT NEXT PTR

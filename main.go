@@ -86,16 +86,16 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "search failed", http.StatusBadRequest)
 	}
-	artists = append(artists, next.Response.Items...)
+	artists = append(artists, next.Items...)
 	sreq.Offset += 50
 
 	// continue making requests sequentially until we are done
-	for next.Response.Next != "" {
+	for next.Offset < (next.Total - 50) {
 		next, err = cl.Search(sreq.Query, sreq.Type, sreq.Limit, sreq.Offset)
 		if err != nil {
 			http.Error(w, "search failed", http.StatusBadRequest)
 		}
-		artists = append(artists, next.Response.Items...)
+		artists = append(artists, next.Items...)
 		sreq.Offset += 50
 	}
 
@@ -116,7 +116,7 @@ const addr = "localhost:8080"
 ////////////////////////////////////////////////////////////////////////////
 
 func init() {
-	cl = client.NewSpotifyClient()
+	cl = client.New()
 	lg = log.New(os.Stdout, "", log.Ltime)
 }
 func main() {
