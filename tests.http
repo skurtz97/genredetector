@@ -3,19 +3,19 @@
 
 
 
-### EXTRA WHITESPACE WITH QUOTES GENRE SEARCH               ERROR: NILL POINTER
+### EXTRA WHITESPACE WITH QUOTES GENRE SEARCH               
 GET http://localhost:8080/searchasync?q=genre:rock&type=artist HTTP/2.0
 Content-Type: application/json
 
-### EXTRA WHITESPACE WITH QUOTES MULTIPLE WORDS             GOOD
+### EXTRA WHITESPACE WITH QUOTES MULTIPLE WORDS            
 GET http://localhost:8080/searchasync?q=genre:"soft rock"&type=artist HTTP/2.0
 Content-Type: application/json
 
-### SINGLE WORD NO QUOTES                                   ERROR: NILL POINTER
+### SINGLE WORD NO QUOTES                                   
 GET {{SEARCH_URL}}q=genre:rock&type=artist HTTP/2.0
 Content-Type: application/json
 
-### SINGLE WORD NO QUOTES EXTRA WHITESPACE                  ERROR: NILL POINTER
+### SINGLE WORD NO QUOTES EXTRA WHITESPACE                 
 GET {{SEARCH_URL}}q=genre: rock   &type=artist HTTP/2.0
 Content-Type: application/json
 
@@ -28,4 +28,3 @@ GET {{SEARCH_URL}}q=genre:   soft  rock   &type=artist HTTP/2.0
 Content-Type: application/json
 
 
-# OVERFLOW WHENEVER WE SEARCH FOR A LARGER GENRE, NEED TO USE OFFSET/TOTAL AND NOT NEXT PTR
