@@ -90,7 +90,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	sreq.Offset += 50
 
 	// continue making requests sequentially until we are done
-	for next.Offset < (next.Total - 50) {
+	for next.Offset <= (next.Total - 50) {
 		next, err = cl.Search(sreq.Query, sreq.Type, sreq.Limit, sreq.Offset)
 		if err != nil {
 			http.Error(w, "search failed", http.StatusBadRequest)
