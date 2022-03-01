@@ -165,13 +165,13 @@ func SearchHandlerAsync(w http.ResponseWriter, r *http.Request) {
 				lg.Printf("error making concurrent request #%d", i)
 			}
 			artists = append(artists, res.Items...)
-			fmt.Printf("%d/%d response received\n", i, len(queue))
+			fmt.Printf("%d/%d response received\n", i+1, len(queue)-1)
 			wg.Done()
 		}(i, r)
 	}
 	wg.Wait()
 
-	lg.Printf("sending %d/%d items to client", len(artists), total)
+	lg.Printf("sending %d/%d items to client", len(artists), 1000)
 	err = json.NewEncoder(w).Encode(artists)
 	if err != nil {
 		http.Error(w, "search failed", http.StatusBadRequest)
