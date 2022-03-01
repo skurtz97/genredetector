@@ -80,17 +80,16 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// todo: benchmark this big allocation
 	artists := make([]client.Item, 0, 1000)
-
-	// make first request
 	next, err := cl.Search(sreq.Query, sreq.Type, sreq.Limit, sreq.Offset)
 	if err != nil {
 		http.Error(w, "search failed", http.StatusBadRequest)
 	}
+
 	artists = append(artists, next.Items...)
 	sreq.Offset += 50
 
 	// continue making requests sequentially until we are done
-	for next.Offset <= (next.Total - 50) {
+	/*for sreq.Offset <= (next.Total - 50) {
 		next, err = cl.Search(sreq.Query, sreq.Type, sreq.Limit, sreq.Offset)
 		if err != nil {
 			http.Error(w, "search failed", http.StatusBadRequest)
@@ -98,7 +97,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		artists = append(artists, next.Items...)
 		sreq.Offset += 50
 	}
-
+	*/
 	lg.Printf("sending %d items to client", len(artists))
 	err = json.NewEncoder(w).Encode(artists)
 	if err != nil {
@@ -107,13 +106,10 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GLOBAL SPOTIFY CLIENT, REUSE THIS BUT MAYBE MAKE MORE FOR PARALLEL REQUESTS ?
 var cl *client.SpotifyClient
 var lg *log.Logger
 
 const addr = "localhost:8080"
-
-////////////////////////////////////////////////////////////////////////////
 
 func init() {
 	cl = client.New()

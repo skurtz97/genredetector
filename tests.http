@@ -1,12 +1,11 @@
 @SEARCH_URL = http://localhost:8080/search?
 @PROTOCOL = HTTP/2.0
 
-### MULTIPLE WORD GENRE SEARCH                                    
-GET {{SEARCH_URL}}q=genre:"soft rock"&type=artist HTTP/2.0
-Content-Type: application/json
+
+
 
 ### SINGLE WORD WITH QUOTES GENRE SEARCH                    ERROR: NILL POINTER
-GET {{SEARCH_URL}}q="rock"&type=artist HTTP/2.0             
+GET {{SEARCH_URL}}q=genre:"soft rock"&type=artist HTTP/2.0             
 Content-Type: application/json
 
 ### EXTRA WHITESPACE WITH QUOTES GENRE SEARCH               ERROR: NILL POINTER

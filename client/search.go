@@ -1,13 +1,82 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 )
+
+type Artists struct {
+	Href   string `json:"href"`
+	Items  []Item `json:"items"`
+	Next   string `json:"next"`
+	Limit  int    `json:"limit"`
+	Offset int    `json:"offset"`
+	Total  int    `json:"total"`
+}
+
+type Item struct {
+	Name       string    `json:"name"`
+	Followers  Followers `json:"followers"`
+	Popularity int       `json:"popularity"`
+	Genres     []string  `json:"genres"`
+	Href       string    `json:"href"`
+	Id         string    `json:"id"`
+}
+
+type Followers struct {
+	Total int `json:"total"`
+}
+
+type SearchResponse struct {
+	*Artists `json:"artists"`
+}
+
+// writes the search response object to json
+func (sr *SearchResponse) ToJSON(w io.Writer) {
+	err := json.NewEncoder(w).Encode(sr)
+	if err != nil {
+		fmt.Println("PrintJSON: failed to decode json")
+	}
+}
+
+// reads the search response object from json
+func (sr *SearchResponse) FromJSON(r io.Reader) {
+	err := json.NewDecoder(r).Decode(sr)
+	if err != nil {
+		fmt.Println("FromJSON: failed to encode json")
+	}
+}
+
+type SearchType int
+
+const (
+	GenreSearch = iota
+	ArtistSearch
+	TrackSearch
+)
+
+func (st SearchType) String() string {
+	return [...]string{"genre", "artist", "track"}[st]
+}
+
+func ToSearchType(st string) SearchType {
+	switch st {
+	case "genre":
+		return GenreSearch
+	case "artist":
+		return ArtistSearch
+	case "track":
+		return TrackSearch
+	default:
+		return ArtistSearch
+	}
+}
 
 var lg *log.Logger = log.New(os.Stdout, "", log.Ltime)
 
@@ -45,23 +114,18 @@ func (sc *SpotifyClient) Search(query string, st SearchType, limit int, offset i
 	}
 
 	lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", req.Method, req.URL)
+	lg.Println(req.Header["Authorization"])
 	res, err := sc.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	//defer res.Body.Close()
 
 	sr := new(SearchResponse)
 	sr.FromJSON(res.Body)
+	fmt.Println(sr)
 
 	return sr, nil
-}
-
-func (sc *SpotifyClient) SearchAsync(query string, st SearchType, limit int, offset int) (*SearchResponse, error) {
-	if sc.shouldRefresh() {
-		sc.authorize()
-	}
-	return nil, nil
 }
 
 // builds and then returns a pointer to a new search request
