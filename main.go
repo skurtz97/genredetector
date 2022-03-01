@@ -165,7 +165,7 @@ func SearchHandlerAsync(w http.ResponseWriter, r *http.Request) {
 				lg.Printf("error making concurrent request #%d", i)
 			}
 			artists = append(artists, res.Items...)
-			fmt.Printf("%d/%d response appended", i, len(queue))
+			fmt.Printf("%d/%d response received\n", i, len(queue))
 			wg.Done()
 		}(i, r)
 	}
