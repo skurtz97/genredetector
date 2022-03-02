@@ -2,7 +2,6 @@
 @PROTOCOL = HTTP/2.0
 
 
-
 ### EXTRA WHITESPACE WITH QUOTES GENRE SEARCH               
 GET http://localhost:8080/searchasync?q=genre:rock&type=artist HTTP/2.0
 Content-Type: application/json

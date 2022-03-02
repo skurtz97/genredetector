@@ -11,16 +11,16 @@ import (
 	"strings"
 )
 
-type Artists struct {
-	Href   string `json:"href"`
-	Items  []Item `json:"items"`
-	Next   string `json:"next"`
-	Limit  int    `json:"limit"`
-	Offset int    `json:"offset"`
-	Total  int    `json:"total"`
+type Body struct {
+	Href    string   `json:"href"`
+	Artists []Artist `json:"items"`
+	Next    string   `json:"next"`
+	Limit   int      `json:"limit"`
+	Offset  int      `json:"offset"`
+	Total   int      `json:"total"`
 }
 
-type Item struct {
+type Artist struct {
 	Name       string    `json:"name"`
 	Followers  Followers `json:"followers"`
 	Popularity int       `json:"popularity"`
@@ -34,7 +34,7 @@ type Followers struct {
 }
 
 type SearchResponse struct {
-	*Artists `json:"artists"`
+	*Body `json:"artists"`
 }
 
 // writes the search response object to json
@@ -50,6 +50,19 @@ func (sr *SearchResponse) FromJSON(r io.Reader) {
 	err := json.NewDecoder(r).Decode(sr)
 	if err != nil {
 		fmt.Println("FromJSON: failed to encode json")
+	}
+}
+
+func ArtistsToJSON(w io.Writer, ar []*Artist) {
+	err := json.NewEncoder(w).Encode(&ar)
+	if err != nil {
+		fmt.Println("PrintJSON: failed to decode json")
+	}
+}
+func ArtistsFromJSON(r io.Reader, ar []*Artist) {
+	err := json.NewDecoder(r).Decode(&ar)
+	if err != nil {
+		fmt.Println("PrintJSON: failed to decode json")
 	}
 }
 

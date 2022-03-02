@@ -83,13 +83,13 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// todo: benchmark this big allocation
-	artists := make([]client.Item, 0, 1000)
+	artists := make([]client.Artist, 0, 1000)
 	next, err := cl.Search(sreq.Query, sreq.Type, sreq.Limit, sreq.Offset)
 	if err != nil {
 		http.Error(w, "search failed", http.StatusBadRequest)
 	}
 
-	artists = append(artists, next.Items...)
+	artists = append(artists, next.Artists...)
 	sreq.Offset += 50
 
 	// we are limited to an offset of 950, but for some genres total > 950 + 50 (limit),
@@ -100,7 +100,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, "search failed", http.StatusBadRequest)
 		}
-		artists = append(artists, next.Items...)
+		artists = append(artists, next.Artists...)
 		sreq.Offset += 50
 	}
 
@@ -119,14 +119,14 @@ func SearchHandlerAsync(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "search failed: parse failed", http.StatusBadRequest)
 	}
 
-	artists := make([]client.Item, 0, 1000)
+	artists := make([]client.Artist, 0, 1000)
 	next, err := cl.Search(req.Query, req.Type, req.Limit, req.Offset)
 	if err != nil {
 		http.Error(w, "search failed", http.StatusBadRequest)
 	}
 
 	total := next.Total
-	artists = append(artists, next.Items...)
+	artists = append(artists, next.Artists...)
 	req.Offset += 50
 	queue := make([]*IncSearchRequest, 0, 19)
 
@@ -164,15 +164,18 @@ func SearchHandlerAsync(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				lg.Printf("error making concurrent request #%d", i)
 			}
-			artists = append(artists, res.Items...)
+			artists = append(artists, res.Artists...)
 			fmt.Printf("%d/%d response received\n", i+1, len(queue)-1)
 			wg.Done()
 		}(i, r)
 	}
 	wg.Wait()
 
-	lg.Printf("sending %d/%d items to client", len(artists), 1000)
-	err = json.NewEncoder(w).Encode(artists)
+	lg.Printf("sorting artists")
+	sortedArtists := client.SortArtists(artists)
+	lg.Printf("sending %d/%d artists to client", len(sortedArtists), 1000)
+
+	err = json.NewEncoder(w).Encode(sortedArtists)
 	if err != nil {
 		http.Error(w, "search failed", http.StatusBadRequest)
 	}
