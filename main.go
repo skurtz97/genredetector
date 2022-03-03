@@ -28,14 +28,21 @@ func FormatGenre(genre string) string {
 	return genre
 }
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
-	genre := FormatGenre(r.URL.Query().Get("q"))
-	partial := false
-	if r.URL.Query().Get("partial") == "true" {
-		partial = true
+	genreQueryStr := FormatGenre(r.URL.Query().Get("q"))
+	genre, err := url.QueryUnescape(genreQueryStr)
+	if err != nil {
+		lg.Println("failed to unescape genre query string")
 	}
+	genre = strings.Trim(genre, "\"")
+	/*
+		partial := false
+		if r.URL.Query().Get("partial") == "true" {
+			partial = true
+		}
+	*/
 	artists := make([]client.Artist, 0, 1000)
 
-	req, err := clt.NewGenreRequest(genre, 0)
+	req, err := clt.NewGenreRequest(genreQueryStr, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -56,7 +63,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	queue := make([]*http.Request, 0, 19)
 
 	for i := 0; i <= ((total/50)-1) && (i <= 18); i++ {
-		req, err = clt.NewGenreRequest(genre, offset)
+		req, err = clt.NewGenreRequest(genreQueryStr, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -78,11 +85,8 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
-	lg.Printf("sorting artists")
+	artists = client.ExactMatches(genre, artists)
 	artists = client.SortArtists(artists)
-	if !partial {
-		artists = client.ExactMatches(genre, artists)
-	}
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
 	err = client.ToJSON(w, artists)

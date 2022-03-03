@@ -111,7 +111,7 @@ func SortArtists(artists []Artist) []Artist {
 
 // returns a new copy of artists that only includes artists that have a genre in Genres that exactly matches genre
 func ExactMatches(genre string, artists []Artist) []Artist {
-	exact := []Artist{}
+	exact := make([]Artist, 0, 1000)
 	for i := range artists {
 		if GenresContains(artists[i].Genres, genre) {
 			exact = append(exact, artists[i])
