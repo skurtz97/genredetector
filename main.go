@@ -34,12 +34,12 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 		lg.Println("failed to unescape genre query string")
 	}
 	genre = strings.Trim(genre, "\"")
-	/*
-		partial := false
-		if r.URL.Query().Get("partial") == "true" {
-			partial = true
-		}
-	*/
+
+	partial := false
+	if r.URL.Query().Get("partial") == "true" {
+		partial = true
+	}
+
 	artists := make([]client.Artist, 0, 1000)
 
 	req, err := clt.NewGenreRequest(genreQueryStr, 0)
@@ -85,7 +85,9 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
-	artists = client.ExactMatches(genre, artists)
+	if !partial {
+		artists = client.ExactMatches(genre, artists)
+	}
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
@@ -105,7 +107,7 @@ func init() {
 		panic(err.Error() + "\n" + "panicking because we couldn't initialize client")
 	}
 	lg = log.New(os.Stdout, "", log.Ltime)
-	clt.SetLogger(lg)
+	clt.Lg = lg
 	err = clt.Authorize()
 	if err != nil {
 		panic(err.Error() + "\n" + "panicing because we couldn't authorize client")

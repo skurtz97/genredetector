@@ -19,7 +19,7 @@ var ErrGenreSearch = errors.New("failed performing genre search")
 type Client struct {
 	*http.Client
 	*auth.Auth
-	lg *log.Logger
+	Lg *log.Logger
 }
 
 type SpotifyError struct {
@@ -94,12 +94,8 @@ func New() (*Client, error) {
 			AccessToken:  "",
 			AuthorizedAt: time.Time{},
 		},
-		lg: log.Default(),
+		Lg: log.Default(),
 	}, nil
-}
-
-func (c *Client) SetLogger(l *log.Logger) {
-	c.lg = l
 }
 
 func (c *Client) NewGenreRequest(genre string, offset int) (*http.Request, error) {
