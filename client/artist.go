@@ -50,14 +50,6 @@ func ToJSON(w io.Writer, as []Artist) error {
 	return nil
 }
 
-// removes an element from the slice
-// this is much faster since it does not care about ordering.
-// make sure to sort AFTER using remove
-func Delete(as []Artist, i int) []Artist {
-	as[i] = as[len(as)-1]
-	return as[:len(as)-1]
-}
-
 type Artist struct {
 	Name       string    `json:"name"`
 	Followers  Followers `json:"followers"`
@@ -98,10 +90,32 @@ func (by By) Sort(artists []Artist) {
 	sort.Sort(as)
 }
 
+// returns true if the genres slice contains the specified genre
+func GenresContains(genres []string, genre string) bool {
+	for _, g := range genres {
+		if g == genre {
+			return true
+		}
+	}
+	return false
+}
+
+// returns a new copy of artists but sorted on popularity in descending order
 func SortArtists(artists []Artist) []Artist {
 	popDesc := func(a1, a2 *Artist) bool {
 		return a1.Popularity > a2.Popularity
 	}
 	By(popDesc).Sort(artists)
 	return artists
+}
+
+// returns a new copy of artists that only includes artists that have a genre in Genres that exactly matches genre
+func ExactMatches(genre string, artists []Artist) []Artist {
+	exact := []Artist{}
+	for i := range artists {
+		if GenresContains(artists[i].Genres, genre) {
+			exact = append(exact, artists[i])
+		}
+	}
+	return exact
 }
