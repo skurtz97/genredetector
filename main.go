@@ -28,6 +28,9 @@ func FormatGenre(genre string) string {
 	return genre
 }
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	genreQueryStr := FormatGenre(r.URL.Query().Get("q"))
 	genre, err := url.QueryUnescape(genreQueryStr)
 	if err != nil {
@@ -116,8 +119,7 @@ func init() {
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/artists/genre", GenreSearchHandler).Methods("GET").Headers("Content-Type", "application/json")
-
+	r.HandleFunc("/artists/genre", GenreSearchHandler)
 	s := &http.Server{
 		Handler:      r,
 		Addr:         "localhost:8080",

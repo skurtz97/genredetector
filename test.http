@@ -4,6 +4,12 @@ Accept: application/json
 
 ###
 
+GET http://localhost:8080/artists/genre?q=soft rock HTTP/2.0
+Content-Type: application/json
+Accept: application/json
+
+###
+
 GET http://localhost:8080/artists/genre?q=rock HTTP/2.0
 Content-Type: application/json
 Accept: application/json
