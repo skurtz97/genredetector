@@ -115,7 +115,7 @@ func (c *Client) NewGenreRequest(genre string, offset int) (*http.Request, error
 }
 
 func (c *Client) GenreSearch(r *http.Request) (*Response, error) {
-	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
+	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrGenreSearch
@@ -124,7 +124,7 @@ func (c *Client) GenreSearch(r *http.Request) (*Response, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		c.lg.Println("STATUS: " + res.Status)
+		c.Lg.Println("STATUS: " + res.Status)
 	}
 	sr := new(Response)
 	err = sr.FromJSON(res.Body)
