@@ -7,14 +7,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
 	"app/auth"
 )
 
-var ErrParseUrl = errors.New("failed to parse string into url")
 var ErrCreateRequest = errors.New("failed to create a new genre search request")
 var ErrGenreSearch = errors.New("failed performing genre search")
 
@@ -105,11 +103,9 @@ func (c *Client) SetLogger(l *log.Logger) {
 }
 
 func (c *Client) NewGenreRequest(genre string, offset int) (*http.Request, error) {
-	url, err := url.Parse("https://api.spotify.com/v1/search?q=genre:" + genre + "&type=artist&limit=50&offset=" + fmt.Sprint(offset))
-	if err != nil {
-		return nil, ErrParseUrl
-	}
-	req, err := http.NewRequest("GET", url.String(), nil)
+	url := "https://api.spotify.com/v1/search?q=genre:" + genre + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, ErrCreateRequest
 	}

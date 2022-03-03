@@ -17,14 +17,18 @@ import (
 
 var ErrParseForm = errors.New("error parsing incoming request form")
 
-func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
-	genre := r.URL.Query().Get("q")
+func FormatGenre(genre string) string {
 	if strings.ContainsAny(genre, " ") && !(strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
 		genre = "\"" + genre + "\""
 	} else if !strings.ContainsAny(genre, " ") && (strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
 		genre = strings.Trim(genre, "\"")
 	}
+	genre = strings.ToLower(genre)
 	genre = url.QueryEscape(genre)
+	return genre
+}
+func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
+	genre := FormatGenre(r.URL.Query().Get("q"))
 	artists := make([]client.Artist, 0, 1000)
 
 	req, err := clt.NewGenreRequest(genre, 0)
