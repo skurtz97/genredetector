@@ -17,7 +17,8 @@ import (
 
 var ErrParseForm = errors.New("error parsing incoming request form")
 
-func FormatGenre(genre string) string {
+func FormatQueryString(genre string) string {
+	genre = strings.Trim(genre, " +%20")
 	if strings.ContainsAny(genre, " ") && !(strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
 		genre = "\"" + genre + "\""
 	} else if !strings.ContainsAny(genre, " ") && (strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
@@ -27,11 +28,104 @@ func FormatGenre(genre string) string {
 	genre = url.QueryEscape(genre)
 	return genre
 }
+
+func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	artistId := mux.Vars(r)["id"]
+	artistId = strings.Trim(artistId, " ")
+
+	req, err := clt.NewArtistIdSearch(artistId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	res, err := clt.ArtistIdSearch(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	err = res.ToJSON(w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+}
+
+func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+	artistQueryStr := r.URL.Query().Get("q")
+	artistQueryStr = FormatQueryString(artistQueryStr)
+	artist, err := url.QueryUnescape(artistQueryStr)
+	if err != nil {
+		lg.Println("failed to unescape genre query string")
+	}
+	artist = strings.Trim(artist, "\"")
+
+	artists := make([]client.Artist, 0, 300)
+	req, err := clt.NewArtistSearch(artistQueryStr, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	res, err := clt.ArtistSearch(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	total := res.Total
+	// max offset will always be 950 due to spotify limitations
+	if total > 1000 {
+		total = 1000
+	}
+	offset := 50
+
+	artists = append(artists, res.Artists...)
+	queue := make([]*http.Request, 0, 19)
+
+	for i := 0; i <= ((total/50)-1) && (i <= 18); i++ {
+		req, err = clt.NewArtistSearch(artistQueryStr, offset)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		queue = append(queue, req)
+		offset += 50
+	}
+
+	wg := sync.WaitGroup{}
+	for i, req := range queue {
+		wg.Add(1)
+		go func(i int, req *http.Request) {
+			res, err := clt.ArtistSearch(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			artists = append(artists, res.Artists...)
+			wg.Done()
+		}(i, req)
+	}
+	wg.Wait()
+
+	lg.Println(len(artists))
+	artists = client.SortArtists(artists)
+	lg.Printf("sending %d/%d artists to client", len(artists), total)
+
+	err = client.ToJSON(w, artists)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+}
+
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	genreQueryStr := FormatGenre(r.URL.Query().Get("q"))
+
+	genreQueryStr := r.URL.Query().Get("q")
+	genreQueryStr = FormatQueryString(genreQueryStr)
 	genre, err := url.QueryUnescape(genreQueryStr)
 	if err != nil {
 		lg.Println("failed to unescape genre query string")
@@ -45,7 +139,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	artists := make([]client.Artist, 0, 1000)
 
-	req, err := clt.NewGenreRequest(genreQueryStr, 0)
+	req, err := clt.NewGenreSearch(genreQueryStr, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -66,7 +160,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	queue := make([]*http.Request, 0, 19)
 
 	for i := 0; i <= ((total/50)-1) && (i <= 18); i++ {
-		req, err = clt.NewGenreRequest(genreQueryStr, offset)
+		req, err = clt.NewGenreSearch(genreQueryStr, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -119,7 +213,9 @@ func init() {
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/artists/genre", GenreSearchHandler)
+	r.HandleFunc("/search/genre", GenreSearchHandler)
+	r.HandleFunc("/search/artist", ArtistSearchHandler)
+	r.HandleFunc("/search/artist/{id}", ArtistIdSearchHandler)
 	s := &http.Server{
 		Handler:      r,
 		Addr:         "localhost:8080",

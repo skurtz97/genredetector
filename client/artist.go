@@ -10,13 +10,17 @@ import (
 var ErrDecodeResponse = errors.New("failed to decode genre search response from json")
 var ErrEncodeResponse = errors.New("failed to encode genre search response to json")
 var ErrEncodeArtists = errors.New("failed to encode artists to json")
+var ErrDecodeArtists = errors.New("failed to decode artists from json")
+var ErrEncodeArtist = errors.New("failed to encode artist to json")
+var ErrDecodeArtist = errors.New("failed to decode artist from json")
 
-type Response struct {
+// response
+type ArtistsResponse struct {
 	*Body `json:"artists"`
 }
 
 // deserializes a response struct from json
-func (res *Response) FromJSON(r io.Reader) error {
+func (res *ArtistsResponse) FromJSON(r io.Reader) error {
 	err := json.NewDecoder(r).Decode(res)
 	if err != nil {
 		return ErrDecodeResponse
@@ -25,7 +29,7 @@ func (res *Response) FromJSON(r io.Reader) error {
 }
 
 // serializes a response struct to json
-func (res *Response) ToJSON(w io.Writer) error {
+func (res *ArtistsResponse) ToJSON(w io.Writer) error {
 	err := json.NewEncoder(w).Encode(res)
 	if err != nil {
 		return ErrEncodeResponse
@@ -42,10 +46,20 @@ type Body struct {
 	Total   int      `json:"total"`
 }
 
+// serializes an artist slice to json
 func ToJSON(w io.Writer, as []Artist) error {
 	err := json.NewEncoder(w).Encode(as)
 	if err != nil {
 		return ErrEncodeArtists
+	}
+	return nil
+}
+
+// deserializes an artist slice from json
+func FromJSON(r io.Reader, as []Artist) error {
+	err := json.NewDecoder(r).Decode(&as)
+	if err != nil {
+		return ErrDecodeArtists
 	}
 	return nil
 }
@@ -57,6 +71,21 @@ type Artist struct {
 	Genres     []string  `json:"genres"`
 	Href       string    `json:"href"`
 	Id         string    `json:"id"`
+}
+
+func (a *Artist) FromJSON(r io.Reader) error {
+	err := json.NewDecoder(r).Decode(a)
+	if err != nil {
+		return ErrDecodeArtists
+	}
+	return nil
+}
+func (a *Artist) ToJSON(w io.Writer) error {
+	err := json.NewEncoder(w).Encode(a)
+	if err != nil {
+		return ErrEncodeArtists
+	}
+	return nil
 }
 
 type Followers struct {

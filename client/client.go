@@ -13,7 +13,7 @@ import (
 	"app/auth"
 )
 
-var ErrCreateRequest = errors.New("failed to create a new genre search request")
+var ErrCreateRequest = errors.New("failed to create a new search request")
 var ErrGenreSearch = errors.New("failed performing genre search")
 
 type Client struct {
@@ -98,7 +98,7 @@ func New() (*Client, error) {
 	}, nil
 }
 
-func (c *Client) NewGenreRequest(genre string, offset int) (*http.Request, error) {
+func (c *Client) NewGenreSearch(genre string, offset int) (*http.Request, error) {
 	url := "https://api.spotify.com/v1/search?q=genre:" + genre + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -113,20 +113,86 @@ func (c *Client) NewGenreRequest(genre string, offset int) (*http.Request, error
 
 	return req, nil
 }
+func (c *Client) NewArtistSearch(artist string, offset int) (*http.Request, error) {
+	url := "https://api.spotify.com/v1/search?q=artist:" + artist + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, ErrCreateRequest
+	}
+	req.Header = map[string][]string{
+		"Accept":        {"application/json"},
+		"Content-Type":  {"application/json"},
+		"Authorization": {"Bearer " + c.AccessToken},
+	}
 
-func (c *Client) GenreSearch(r *http.Request) (*Response, error) {
+	return req, nil
+}
+
+func (c *Client) NewArtistIdSearch(id string) (*http.Request, error) {
+	url := "https://api.spotify.com/v1/artists/" + id
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, ErrCreateRequest
+	}
+	req.Header = map[string][]string{
+		"Accept":        {"application/json"},
+		"Content-Type":  {"application/json"},
+		"Authorization": {"Bearer " + c.AccessToken},
+	}
+	return req, nil
+}
+
+func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrGenreSearch
 	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		c.Lg.Println("STATUS: " + res.Status)
+	}
 
+	sr := new(Artist)
+	err = sr.FromJSON(res.Body)
+
+	if err != nil {
+		return nil, err
+	}
+	return sr, nil
+
+}
+func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
+	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
+	res, err := c.Do(r)
+	if err != nil {
+		return nil, ErrGenreSearch
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		c.Lg.Println("STATUS: " + res.Status)
+	}
+	sr := new(ArtistsResponse)
+	err = sr.FromJSON(res.Body)
+
+	if err != nil {
+		return nil, err
+	}
+	return sr, nil
+}
+
+func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
+	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
+	res, err := c.Do(r)
+	if err != nil {
+		return nil, ErrGenreSearch
+	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
 		c.Lg.Println("STATUS: " + res.Status)
 	}
-	sr := new(Response)
+	sr := new(ArtistsResponse)
 	err = sr.FromJSON(res.Body)
 
 	if err != nil {
