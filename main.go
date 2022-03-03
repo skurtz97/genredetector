@@ -10,8 +10,9 @@ import (
 	"sync"
 	"time"
 
+	"app/client"
+
 	"github.com/gorilla/mux"
-	"github.com/skurtz97/app/client"
 )
 
 var ErrParseForm = errors.New("error parsing incoming request form")

@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/skurtz97/auth"
+	"app/auth"
 )
 
 var ErrParseUrl = errors.New("failed to parse string into url")
