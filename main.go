@@ -29,6 +29,10 @@ func FormatGenre(genre string) string {
 }
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	genre := FormatGenre(r.URL.Query().Get("q"))
+	partial := false
+	if r.URL.Query().Get("partial") == "true" {
+		partial = true
+	}
 	artists := make([]client.Artist, 0, 1000)
 
 	req, err := clt.NewGenreRequest(genre, 0)
@@ -75,10 +79,13 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 	lg.Printf("sorting artists")
-	sorted := client.SortArtists(artists)
-	lg.Printf("sending %d/%d artists to client", len(sorted), total)
+	artists = client.SortArtists(artists)
+	if !partial {
+		artists = client.ExactMatches(genre, artists)
+	}
+	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	err = client.ToJSON(w, sorted)
+	err = client.ToJSON(w, artists)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
