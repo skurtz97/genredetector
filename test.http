@@ -37,3 +37,10 @@ Accept: application/json
 GET http://localhost:8080/search/artist?q=daft punk HTTP/2.0
 Content-Type: application/json
 Accept: application/json
+
+
+### ARTIST ID SEARCH TESTS
+GET http://localhost:8080/search/artist/6WedqgL53vbco33SU3sVAX HTTP/2.0
+Content-Type: application/json
+Accept: application/json
+

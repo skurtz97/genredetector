@@ -108,7 +108,6 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
-	lg.Println(len(artists))
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
