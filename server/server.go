@@ -32,22 +32,15 @@ func init() {
 
 func NewServer(addr string, dev bool) *http.Server {
 	r := mux.NewRouter()
-	if dev {
-		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET", "OPTIONS")
-		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET", "OPTIONS")
-		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET", "OPTIONS")
-		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
-		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET", "OPTIONS")
-		r.HandleFunc("/", IndexHandler).Methods("GET", "OPTIONS")
-		mux.CORSMethodMiddleware(r)
-	} else {
-		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET")
-		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET")
-		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET")
-		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET")
-		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET")
-		r.HandleFunc("/", IndexHandler).Methods("GET")
-	}
+	r.Use()
+	r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/", IndexHandler).Methods("GET", "OPTIONS")
+	r.Use(middlewareCORS)
+	mux.CORSMethodMiddleware(r)
 
 	s := &http.Server{
 		Handler:      r,
