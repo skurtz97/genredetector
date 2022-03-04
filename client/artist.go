@@ -65,12 +65,16 @@ func ArtistsFromJSON(r io.Reader, as []Artist) error {
 }
 
 type Artist struct {
-	Name       string    `json:"name"`
-	Followers  Followers `json:"followers"`
-	Popularity int       `json:"popularity"`
-	Genres     []string  `json:"genres"`
-	Href       string    `json:"href"`
-	Id         string    `json:"id"`
+	Name         string       `json:"name"`
+	Followers    Followers    `json:"followers"`
+	Popularity   int          `json:"popularity"`
+	Genres       []string     `json:"genres"`
+	ExternalUrls ExternalUrls `json:"external_urls"`
+	Id           string       `json:"id"`
+}
+
+type ExternalUrls struct {
+	Spotify string `json:"spotify"`
 }
 
 func (a *Artist) FromJSON(r io.Reader) error {
