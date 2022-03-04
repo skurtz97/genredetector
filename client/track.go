@@ -20,10 +20,11 @@ type TracksBody struct {
 }
 
 type Track struct {
-	Name    string        `json:"name"`
-	Album   Album         `json:"album"`
-	Artists []TrackArtist `json:"artists"`
-	Href    string        `json:"href"`
+	Name       string        `json:"name"`
+	Album      Album         `json:"album"`
+	Artists    []TrackArtist `json:"artists"`
+	Href       string        `json:"href"`
+	Popularity int           `json:"popularity"`
 }
 
 type Album struct {
