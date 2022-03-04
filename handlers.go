@@ -225,11 +225,11 @@ func NewIdSearchHandler(t SearchType) http.HandlerFunc {
 		fmt.Println(id)
 		id = strings.Trim(id, " ")
 		switch t {
-		case ArtistId:
+		case Artist:
 			req, _ := clt.NewArtistIdSearch(id)
 			res, _ := clt.ArtistIdSearch(req)
 			_ = res.ToJSON(w)
-		case TrackId:
+		case Track:
 			req, _ := clt.NewTrackIdSearch(id)
 			res, _ := clt.TrackIdSearch(req)
 			_ = res.ToJSON(w)

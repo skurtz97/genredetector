@@ -10,9 +10,7 @@ type SearchType int
 const (
 	Genre SearchType = iota
 	Artist
-	ArtistId
 	Track
-	TrackId
 )
 
 func getTotal(total int) int {

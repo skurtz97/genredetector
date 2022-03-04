@@ -52,16 +52,16 @@ func main() {
 	if mode == "-d" {
 		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET", "OPTIONS")
 		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET", "OPTIONS")
-		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(ArtistId)).Methods("GET", "OPTIONS")
+		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET", "OPTIONS")
 		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
-		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(TrackId)).Methods("GET", "OPTIONS")
+		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET", "OPTIONS")
 		mux.CORSMethodMiddleware(r)
 	} else {
 		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET")
 		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET")
-		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(ArtistId)).Methods("GET")
+		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET")
 		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET")
-		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(TrackId)).Methods("GET")
+		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET")
 	}
 
 	s := &http.Server{
