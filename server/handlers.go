@@ -13,12 +13,12 @@ import (
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 	w.WriteHeader(200)
 	w.Write([]byte("Welcome to Genre Detector"))
 }
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 	query := formatQueryString(r.URL.Query().Get("q"))
 	genre, err := url.QueryUnescape(query)
 	if err != nil {
@@ -85,7 +85,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 	query := r.URL.Query().Get("q")
 	query = formatQueryString(query)
 
@@ -140,7 +140,7 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 	query := formatQueryString(r.URL.Query().Get("q"))
 
 	req, err := c.NewTrackSearch(query, 0)
@@ -197,7 +197,7 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
@@ -216,7 +216,7 @@ func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
@@ -236,7 +236,7 @@ func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 func NewIdSearchHandler(t SearchType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
 		id := mux.Vars(r)["id"]
 		fmt.Println(id)
 		id = strings.Trim(id, " ")
