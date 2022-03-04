@@ -1,55 +1,38 @@
-package main
+package server
 
 import (
-	"errors"
+	"genredetector/client"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
-	"genredetector/client"
-
 	"github.com/gorilla/mux"
 )
 
-var ErrParseForm = errors.New("error parsing incoming request form")
-
-// package variables
 var (
-	clt *client.Client
-	lg  *log.Logger
+	c  *client.Client
+	lg *log.Logger
 )
 
-// panic if we can't initialize our client
+// panic if we can't initialize the client
 // most likely Go can't find our id or secret, so check the environment variables
 func init() {
-	clt = client.New()
-	if clt == nil {
+	c = client.New()
+	if c == nil {
 		panic("panicking because we couldn't initialize client\n")
 	}
 	lg = log.New(os.Stdout, "", log.Ltime)
-	clt.Lg = lg
-	clt.Authorize()
-	if clt.AccessToken == "" {
+	c.SetLogger(lg)
+	c.Authorize()
+	if c.AccessToken == "" {
 		panic("panicing because we couldn't authorize client\n")
 	}
 }
 
-// we are good to go
-func main() {
-	var mode string
-	if len(os.Args) == 2 {
-		mode = os.Args[1]
-		if mode != "-d" {
-			mode = "-p"
-		}
-	} else {
-		mode = "-p"
-	}
-
+func NewServer(addr string, dev bool) *http.Server {
 	r := mux.NewRouter()
-
-	if mode == "-d" {
+	if dev {
 		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET", "OPTIONS")
 		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET", "OPTIONS")
 		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET", "OPTIONS")
@@ -66,12 +49,11 @@ func main() {
 
 	s := &http.Server{
 		Handler:      r,
-		Addr:         "localhost:8080",
+		Addr:         addr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
 
-	lg.Printf("listening on %s", s.Addr)
-	lg.Fatal(s.ListenAndServe())
+	return s
 }

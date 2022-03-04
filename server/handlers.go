@@ -1,12 +1,13 @@
-package main
+package server
 
 import (
 	"fmt"
-	"genredetector/client"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+
+	"genredetector/client"
 
 	"github.com/gorilla/mux"
 )
@@ -19,12 +20,12 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	genre, partial := strings.Trim(genre, "\""), r.URL.Query().Get("partial") == "true"
 
-	req, err := clt.NewGenreSearch(query, 0)
+	req, err := c.NewGenreSearch(query, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	res, err := clt.GenreSearch(req)
+	res, err := c.GenreSearch(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -36,7 +37,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	requests := make([]*http.Request, nreqs)
 
 	for i, offset := 0, 50; i < nreqs; i++ {
-		req, err = clt.NewGenreSearch(query, offset)
+		req, err = c.NewGenreSearch(query, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -50,7 +51,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
 			defer wg.Done()
-			res, err := clt.GenreSearch(req)
+			res, err := c.GenreSearch(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -79,11 +80,11 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	query = formatQueryString(query)
 
 	artists := make([]client.Artist, 0, 300)
-	req, err := clt.NewArtistSearch(query, 0)
+	req, err := c.NewArtistSearch(query, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	res, err := clt.ArtistSearch(req)
+	res, err := c.ArtistSearch(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -95,7 +96,7 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	requests := make([]*http.Request, nreqs)
 
 	for i, offset := 0, 50; i <= nreqs; i++ {
-		req, err = clt.NewArtistSearch(query, offset)
+		req, err = c.NewArtistSearch(query, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -107,7 +108,7 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	for i, req := range requests {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
-			res, err := clt.ArtistSearch(req)
+			res, err := c.ArtistSearch(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -131,24 +132,24 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 	query := formatQueryString(r.URL.Query().Get("q"))
 
-	req, err := clt.NewTrackSearch(query, 0)
+	req, err := c.NewTrackSearch(query, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	res, err := clt.TrackSearch(req)
+	res, err := c.TrackSearch(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	total := getTotal(res.Total)
-	clt.Lg.Printf("total: %d", total)
+	lg.Printf("total: %d", total)
 	nreqs := getNumRequests(res.Total)
 	tracks := make([]client.Track, 0, total)
 	tracks = append(tracks, res.Tracks...)
 	requests := make([]*http.Request, nreqs)
 
 	for i, offset := 0, 50; i < nreqs; i++ {
-		req, err = clt.NewTrackSearch(query, offset)
+		req, err = c.NewTrackSearch(query, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -156,14 +157,14 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 		offset += 50
 	}
 
-	clt.Lg.Printf("\ntotal: %d\t nreqs: %d\t len(tracks): %d\t len(requests): %d", total, nreqs, len(tracks), len(requests))
+	lg.Printf("\ntotal: %d\t nreqs: %d\t len(tracks): %d\t len(requests): %d", total, nreqs, len(tracks), len(requests))
 	wg := sync.WaitGroup{}
 	var m sync.Mutex
 	for i, req := range requests {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
 			defer wg.Done()
-			res, err := clt.TrackSearch(req)
+			res, err := c.TrackSearch(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -187,11 +188,11 @@ func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
-	req, err := clt.NewArtistIdSearch(id)
+	req, err := c.NewArtistIdSearch(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	res, err := clt.ArtistIdSearch(req)
+	res, err := c.ArtistIdSearch(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -205,11 +206,11 @@ func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
-	req, err := clt.NewTrackIdSearch(id)
+	req, err := c.NewTrackIdSearch(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	res, err := clt.TrackIdSearch(req)
+	res, err := c.TrackIdSearch(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -226,12 +227,12 @@ func NewIdSearchHandler(t SearchType) http.HandlerFunc {
 		id = strings.Trim(id, " ")
 		switch t {
 		case Artist:
-			req, _ := clt.NewArtistIdSearch(id)
-			res, _ := clt.ArtistIdSearch(req)
+			req, _ := c.NewArtistIdSearch(id)
+			res, _ := c.ArtistIdSearch(req)
 			_ = res.ToJSON(w)
 		case Track:
-			req, _ := clt.NewTrackIdSearch(id)
-			res, _ := clt.TrackIdSearch(req)
+			req, _ := c.NewTrackIdSearch(id)
+			res, _ := c.TrackIdSearch(req)
 			_ = res.ToJSON(w)
 		default:
 			http.Error(w, "invalid search type", http.StatusBadRequest)
