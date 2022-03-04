@@ -47,7 +47,16 @@ Accept: application/json
 
 
 ### ARTIST ID SEARCH TESTS
-GET http://localhost:8080/search/artist/6WedqgL53vbco33SU3sVAX HTTP/2.0
+GET http://localhost:8080/search/artist/6WedqgL53vbco33SU3sVAX?si=Rr7qnaKVRsWWX525pUXYqQ HTTP/2.0
 Content-Type: application/json
 Accept: application/json
+
+
+### TRACK ID SEARCH TESTS
+GET http://localhost:8080/search/track/2cGxRwrMyEAp8dEbuZaVv6?si=11ed3593107b4617 HTTP/2.0
+Content-Type: application/json
+Accept: application/json
+
+
+
 

@@ -14,8 +14,11 @@ import (
 
 var ErrEnv = errors.New("client id and client secret environment variables missing")
 var ErrCreateRequest = errors.New("failed to create a new search request")
-var ErrGenreSearch = errors.New("failed performing genre search")
-var ErrTrackSearch = errors.New("failed performing track search")
+var ErrGenreSearch = errors.New("failed doing genre search")
+var ErrArtistSearch = errors.New("failed doing artist search")
+var ErrArtistIdSearch = errors.New("failed doing artist id search")
+var ErrTrackSearch = errors.New("failed doing track search")
+var ErrTrackIdSearch = errors.New("failed doing track id search")
 
 type Client struct {
 	*http.Client
@@ -87,6 +90,16 @@ func (c *Client) NewArtistIdSearch(id string) (*http.Request, error) {
 	return req, nil
 }
 
+func (c *Client) NewTrackIdSearch(id string) (*http.Request, error) {
+	url := "https://api.spotify.com/v1/tracks/" + id
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, ErrCreateRequest
+	}
+	req.Header = getRequestHeader(c.AccessToken)
+	return req, nil
+}
+
 func (c *Client) NewTrackSearch(track string, offset int) (*http.Request, error) {
 	url := "https://api.spotify.com/v1/search?q=track:" + track + "&type=track&limit=50&offset=" + fmt.Sprint(offset)
 	req, err := http.NewRequest("GET", url, nil)
@@ -101,7 +114,7 @@ func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrGenreSearch
+		return nil, ErrArtistIdSearch
 	}
 	defer res.Body.Close()
 
@@ -120,7 +133,7 @@ func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
 	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrGenreSearch
+		return nil, ErrArtistSearch
 	}
 	defer res.Body.Close()
 	sr := new(ArtistsResponse)
@@ -149,21 +162,34 @@ func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 }
 
 func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
-
+	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
-		c.Lg.Printf("\nERRRORRRR STATUS: %s\n", res.Status)
 		return nil, ErrTrackSearch
 	}
 
 	defer res.Body.Close()
-	c.Lg.Printf("TRACK SEARCH GOOD")
 	sr := new(TracksResponse)
 	err = sr.FromJSON(res.Body)
 	if err != nil {
 		return nil, ErrDecodeTrackResponse
 	}
 
+	return sr, nil
+}
+
+func (c *Client) TrackIdSearch(r *http.Request) (*Track, error) {
+	c.Lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
+	res, err := c.Do(r)
+	if err != nil {
+		return nil, ErrTrackSearch
+	}
+	defer res.Body.Close()
+	sr := new(Track)
+	err = sr.FromJSON(res.Body)
+	if err != nil {
+		return nil, ErrDecodeTrack
+	}
 	return sr, nil
 }
 

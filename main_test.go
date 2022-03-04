@@ -23,7 +23,7 @@ func TestGenreSearchHandler(t *testing.T) {
 		clt.Authorize()
 
 		t.Run(tt.name, func(t *testing.T) {
-			tt.query = FormatQueryString(tt.query)
+			tt.query = formatQueryString(tt.query)
 
 			req, err := clt.NewGenreSearch(tt.query, 0)
 			if err != nil {

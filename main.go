@@ -4,10 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
-	"sync"
 	"time"
 
 	"genredetector/client"
@@ -17,247 +14,14 @@ import (
 
 var ErrParseForm = errors.New("error parsing incoming request form")
 
-func FormatQueryString(genre string) string {
-	genre = strings.Trim(genre, " +%20")
-	if strings.ContainsAny(genre, " ") && !(strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
-		genre = "\"" + genre + "\""
-	} else if !strings.ContainsAny(genre, " ") && (strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
-		genre = strings.Trim(genre, "\"")
-	}
-	genre = strings.ToLower(genre)
-	genre = url.QueryEscape(genre)
-	return genre
-}
+// package variables
+var (
+	clt *client.Client
+	lg  *log.Logger
+)
 
-func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	artistId := mux.Vars(r)["id"]
-	artistId = strings.Trim(artistId, " ")
-
-	req, err := clt.NewArtistIdSearch(artistId)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-	res, err := clt.ArtistIdSearch(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	err = res.ToJSON(w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-
-func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-	artistQueryStr := r.URL.Query().Get("q")
-	artistQueryStr = FormatQueryString(artistQueryStr)
-
-	artists := make([]client.Artist, 0, 300)
-	req, err := clt.NewArtistSearch(artistQueryStr, 0)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-	res, err := clt.ArtistSearch(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	total := getTotal(res.Total)
-	nreqs := getNumRequests(total)
-
-	artists = append(artists, res.Artists...)
-	requests := make([]*http.Request, nreqs)
-
-	for i, offset := 0, 50; i <= nreqs; i++ {
-		req, err = clt.NewArtistSearch(artistQueryStr, offset)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		requests = append(requests, req)
-		offset += 50
-	}
-
-	wg := sync.WaitGroup{}
-	for i, req := range requests {
-		wg.Add(1)
-		go func(i int, req *http.Request) {
-			res, err := clt.ArtistSearch(req)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-			for j, artist := range res.Artists {
-				artists[50+(50*i)+j] = artist
-			}
-			wg.Done()
-		}(i, req)
-	}
-	wg.Wait()
-
-	artists = client.SortArtists(artists)
-	lg.Printf("sending %d/%d artists to client", len(artists), total)
-
-	err = client.ArtistsToJSON(w, artists)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-
-func getTotal(total int) int {
-	if total > 1000 {
-		return 1000
-	} else {
-		return total
-	}
-}
-func getNumRequests(total int) int {
-	if (total / 50) > 19 {
-		return 19
-	} else {
-		return (total / 50)
-	}
-}
-
-func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-	query := FormatQueryString(r.URL.Query().Get("q"))
-
-	req, err := clt.NewTrackSearch(query, 0)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-	res, err := clt.TrackSearch(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	total := getTotal(res.Total)
-	clt.Lg.Printf("total: %d", total)
-	nreqs := getNumRequests(res.Total)
-	tracks := make([]client.Track, 0, total)
-	tracks = append(tracks, res.Tracks...)
-	requests := make([]*http.Request, nreqs)
-
-	for i, offset := 0, 50; i < nreqs; i++ {
-		req, err = clt.NewTrackSearch(query, offset)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		requests[i] = req
-		offset += 50
-	}
-
-	clt.Lg.Printf("\ntotal: %d\t nreqs: %d\t len(tracks): %d\t len(requests): %d", total, nreqs, len(tracks), len(requests))
-	wg := sync.WaitGroup{}
-	var m sync.Mutex
-	for i, req := range requests {
-		wg.Add(1)
-		go func(i int, req *http.Request) {
-			defer wg.Done()
-			res, err := clt.TrackSearch(req)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-			// putting artist in explicit indexes is an alternative to using a mutex and appending
-			// mutex.Lock(); artists = append(artists, res.Artists...); mutex.Unlock()
-			m.Lock()
-			tracks = append(tracks, res.Tracks...)
-			m.Unlock()
-
-		}(i, req)
-	}
-	wg.Wait()
-
-	err = client.TracksToJSON(w, tracks)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-}
-
-func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-	query := FormatQueryString(r.URL.Query().Get("q"))
-	genre, err := url.QueryUnescape(query)
-	if err != nil {
-		http.Error(w, "failed to unescape query string", http.StatusBadRequest)
-	}
-	genre, partial := strings.Trim(genre, "\""), r.URL.Query().Get("partial") == "true"
-
-	req, err := clt.NewGenreSearch(query, 0)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	res, err := clt.GenreSearch(req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
-	total := getTotal(res.Total)
-	nreqs := getNumRequests(res.Total)
-	artists := make([]client.Artist, 0, total)
-	artists = append(artists, res.Artists...)
-	requests := make([]*http.Request, nreqs)
-
-	for i, offset := 0, 50; i < nreqs; i++ {
-		req, err = clt.NewGenreSearch(query, offset)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		requests[i] = req
-		offset += 50
-	}
-
-	wg := sync.WaitGroup{}
-	var m sync.Mutex
-	for i, req := range requests {
-		wg.Add(1)
-		go func(i int, req *http.Request) {
-			defer wg.Done()
-			res, err := clt.GenreSearch(req)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-			// putting artist in explicit indexes is an alternative to using a mutex and appending
-			// mutex.Lock(); artists = append(artists, res.Artists...); mutex.Unlock()
-			m.Lock()
-			artists = append(artists, res.Artists...)
-			m.Unlock()
-
-		}(i, req)
-	}
-	wg.Wait()
-
-	if !partial {
-		artists = client.ExactMatches(genre, artists)
-	}
-	artists = client.SortArtists(artists)
-	lg.Printf("sending %d/%d artists to client", len(artists), total)
-
-	err = client.ArtistsToJSON(w, artists)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-var clt *client.Client
-var lg *log.Logger
-
+// panic if we can't initialize our client
+// most likely Go can't find our id or secret, so check the environment variables
 func init() {
 	clt = client.New()
 	if clt == nil {
@@ -271,12 +35,34 @@ func init() {
 	}
 }
 
+// we are good to go
 func main() {
+	var mode string
+	if len(os.Args) == 2 {
+		mode = os.Args[1]
+		if mode != "-d" {
+			mode = "-p"
+		}
+	} else {
+		mode = "-p"
+	}
+
 	r := mux.NewRouter()
-	r.HandleFunc("/search/genre", GenreSearchHandler)
-	r.HandleFunc("/search/artist", ArtistSearchHandler)
-	r.HandleFunc("/search/artist/{id}", ArtistIdSearchHandler)
-	r.HandleFunc("/search/track", TrackSearchHandler)
+
+	if mode == "-d" {
+		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET", "OPTIONS")
+		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET", "OPTIONS")
+		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(ArtistId)).Methods("GET", "OPTIONS")
+		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
+		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(TrackId)).Methods("GET", "OPTIONS")
+		mux.CORSMethodMiddleware(r)
+	} else {
+		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET")
+		r.HandleFunc("/search/artist", ArtistSearchHandler).Methods("GET")
+		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(ArtistId)).Methods("GET")
+		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET")
+		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(TrackId)).Methods("GET")
+	}
 
 	s := &http.Server{
 		Handler:      r,

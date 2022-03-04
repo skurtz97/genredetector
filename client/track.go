@@ -20,6 +20,7 @@ type TracksBody struct {
 }
 
 type Track struct {
+	Name    string        `json:"name"`
 	Album   Album         `json:"album"`
 	Artists []TrackArtist `json:"artists"`
 }
@@ -40,6 +41,8 @@ var ErrDecodeTrackResponse = errors.New("failed to decode track search response 
 var ErrEncodeTrackResponse = errors.New("failed to encode track search response to json")
 var ErrDecodeTracks = errors.New("failed to decode tracks from json")
 var ErrEncodeTracks = errors.New("failed to encode tracks to json")
+var ErrDecodeTrack = errors.New("failed to decode track from json")
+var ErrEncodeTrack = errors.New("failed to encode track to json")
 
 func (res *TracksResponse) FromJSON(r io.Reader) error {
 	err := json.NewDecoder(r).Decode(res)
@@ -52,6 +55,22 @@ func (res *TracksResponse) ToJSON(w io.Writer) error {
 	err := json.NewEncoder(w).Encode(res)
 	if err != nil {
 		return ErrEncodeTrackResponse
+	}
+	return nil
+}
+
+func (t *Track) FromJSON(r io.Reader) error {
+	err := json.NewDecoder(r).Decode(t)
+	if err != nil {
+		return ErrDecodeTrack
+	}
+	return nil
+}
+
+func (t *Track) ToJSON(w io.Writer) error {
+	err := json.NewEncoder(w).Encode(t)
+	if err != nil {
+		return ErrEncodeTrack
 	}
 	return nil
 }
