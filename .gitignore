@@ -1,2 +1,4 @@
 app.yaml
 *.http
+.gcloudignore
+.gitignore
