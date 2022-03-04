@@ -38,6 +38,7 @@ func NewServer(addr string, dev bool) *http.Server {
 		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET", "OPTIONS")
 		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
 		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET", "OPTIONS")
+		r.HandleFunc("/", IndexHandler).Methods("GET", "OPTIONS")
 		mux.CORSMethodMiddleware(r)
 	} else {
 		r.HandleFunc("/search/genre", GenreSearchHandler).Methods("GET")
@@ -45,6 +46,7 @@ func NewServer(addr string, dev bool) *http.Server {
 		r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET")
 		r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET")
 		r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET")
+		r.HandleFunc("/", IndexHandler).Methods("GET")
 	}
 
 	s := &http.Server{

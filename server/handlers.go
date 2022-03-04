@@ -12,6 +12,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("Welcome to Genre Detector"))
+}
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	query := formatQueryString(r.URL.Query().Get("q"))
 	genre, err := url.QueryUnescape(query)
