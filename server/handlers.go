@@ -180,6 +180,7 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
+	tracks = client.SortTracks(tracks)
 	lg.Printf("sending %d/%d artists to client", len(tracks), total)
 	err = client.TracksToJSON(w, tracks)
 	if err != nil {
