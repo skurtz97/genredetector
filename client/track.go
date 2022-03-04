@@ -23,6 +23,7 @@ type Track struct {
 	Name    string        `json:"name"`
 	Album   Album         `json:"album"`
 	Artists []TrackArtist `json:"artists"`
+	Href    string        `json:"href"`
 }
 
 type Album struct {
@@ -34,7 +35,6 @@ type Album struct {
 
 type TrackArtist struct {
 	Name string `json:"name"`
-	Href string `json:"href"`
 }
 
 var ErrDecodeTrackResponse = errors.New("failed to decode track search response from json")
