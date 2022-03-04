@@ -5,10 +5,10 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
-var ErrEnv = errors.New("client id and client secret environment variables missing")
 var ErrCredentials = errors.New("client authorization does not have valid client id or client secret")
 var ErrCreateRequest = errors.New("failed to generate a new http request for authorization")
 var ErrRequest = errors.New("authorization request to spotify failed")
@@ -72,23 +72,66 @@ func (a *Auth) ToJSON(w io.Writer) error {
 }
 
 // returns true if it has been more than 3200 seconds since last authorization
-func (ar *Auth) ShouldRefresh() bool {
-	return (ar.AuthorizedAt.After(ar.AuthorizedAt.Add(time.Duration(3200) * time.Second)))
+func (a *Auth) ShouldRefresh() bool {
+	return (a.AuthorizedAt.After(a.AuthorizedAt.Add(time.Duration(3200) * time.Second)))
 }
 
-func (a *Auth) NewAuthRequest() (*http.Request, error) {
+func New() *Auth {
+	cid, csec := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET")
+	if cid == "" || csec == "" {
+		return &Auth{
+			Id:           "",
+			Secret:       "",
+			AccessToken:  "",
+			AuthorizedAt: time.Time{},
+		}
+	} else {
+		return &Auth{
+			Id:           cid,
+			Secret:       csec,
+			AccessToken:  "",
+			AuthorizedAt: time.Time{},
+		}
+	}
+}
+
+func (a *Auth) NewAuthRequest() *http.Request {
 	if a.Id == "" || a.Secret == "" {
-		return nil, ErrCredentials
+		return nil
+	} else {
+		req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token?grant_type=client_credentials", nil)
+		if err != nil {
+			return nil
+		}
+		req.Header = map[string][]string{
+			"Accept":       {"application/json"},
+			"Content-Type": {"application/x-www-form-urlencoded"},
+		}
+		req.SetBasicAuth(a.Id, a.Secret)
+		return req
+	}
+}
+
+func (a *Auth) Authorize() {
+	token := a.GetToken()
+	a.AccessToken = token
+	a.AuthorizedAt = (time.Now())
+}
+
+func (a *Auth) GetToken() string {
+	req := a.NewAuthRequest()
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer res.Body.Close()
+
+	token := AuthToken{}
+	err = token.FromJSON(res.Body)
+	if err != nil {
+		return ""
 	}
 
-	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token?grant_type=client_credentials", nil)
-	if err != nil {
-		return nil, ErrCreateRequest
-	}
-	req.Header = map[string][]string{
-		"Accept":       {"application/json"},
-		"Content-Type": {"application/x-www-form-urlencoded"},
-	}
-	req.SetBasicAuth(a.Id, a.Secret)
-	return req, nil
+	return token.AccessToken
 }

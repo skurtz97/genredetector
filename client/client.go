@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+var ErrEnv = errors.New("client id and client secret environment variables missing")
 var ErrCreateRequest = errors.New("failed to create a new search request")
 var ErrGenreSearch = errors.New("failed performing genre search")
 
@@ -46,55 +47,6 @@ func (ser *SpotifyErrorResponse) FromJSON(r io.Reader) error {
 		return ErrDecodeResponse
 	}
 	return nil
-}
-
-func (c *Client) Authorize() error {
-	token, err := c.GetToken()
-	if err != nil {
-		return err
-	}
-	c.AccessToken = token
-	c.AuthorizedAt = (time.Now())
-	return nil
-}
-func (c *Client) GetToken() (string, error) {
-	req, err := c.NewAuthRequest()
-	if err != nil {
-		return "", err
-	}
-
-	res, err := c.Do(req)
-	if err != nil {
-		return "", auth.ErrRequest
-	}
-	defer res.Body.Close()
-
-	token := new(auth.AuthToken)
-	err = token.FromJSON(res.Body)
-	if err != nil {
-		return "", err
-	}
-	return token.AccessToken, nil
-}
-
-func New() (*Client, error) {
-	cid, csec := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET")
-	if cid == "" || csec == "" {
-		fmt.Println("cid: " + cid + " csec: " + csec)
-		return nil, auth.ErrEnv
-	}
-	return &Client{
-		Client: &http.Client{
-			Timeout: time.Duration(10) * time.Second,
-		},
-		Auth: &auth.Auth{
-			Id:           cid,
-			Secret:       csec,
-			AccessToken:  "",
-			AuthorizedAt: time.Time{},
-		},
-		Lg: log.Default(),
-	}, nil
 }
 
 func (c *Client) NewGenreSearch(genre string, offset int) (*http.Request, error) {
@@ -198,4 +150,18 @@ func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 		return nil, err
 	}
 	return sr, nil
+}
+
+func New() *Client {
+	cid, csec := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET")
+	if cid == "" || csec == "" {
+		return nil
+	}
+	return &Client{
+		Client: &http.Client{
+			Timeout: time.Duration(10) * time.Second,
+		},
+		Auth: auth.New(),
+		Lg:   log.Default(),
+	}
 }

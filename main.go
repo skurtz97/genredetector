@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -119,6 +118,21 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func getTotal(total int) int {
+	if total > 1000 {
+		return 1000
+	} else {
+		return total
+	}
+}
+func getNumRequests(total int) int {
+	if ((total / 50) - 1) > 19 {
+		return 19
+	} else {
+		return ((total / 50) - 1)
+	}
+}
+
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -129,8 +143,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "failed to unescape query string", http.StatusBadRequest)
 	}
-	genre = strings.Trim(genre, "\"")
-	partial := r.URL.Query().Get("partial") == "true"
+	genre, partial := strings.Trim(genre, "\""), r.URL.Query().Get("partial") == "true"
 
 	req, err := clt.NewGenreSearch(query, 0)
 	if err != nil {
@@ -142,31 +155,20 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	total := res.Total
-	fmt.Printf("total: %d\n", total)
-	if total > 1000 {
-		fmt.Println("resetting total...")
-		total = 1000
+	total := getTotal(res.Total)
+	nreqs := getNumRequests(res.Total)
+	artists := make([]client.Artist, total)
+	for i, artist := range res.Artists {
+		artists[i] = artist
 	}
-	fmt.Printf("total: %d\n", total)
-	nreqs := (total / 50) - 1
-	if ((total / 50) - 1) > 19 {
-		nreqs = 19
-	}
-	fmt.Printf("nreqs: %d\n", nreqs)
-
-	artists := make([]client.Artist, total, total+1)
-	fmt.Printf("len(artists): %d\n", len(artists))
-	artists = append(artists, res.Artists...)
-
-	requests := make([]*http.Request, 0, 19)
+	requests := make([]*http.Request, nreqs)
 
 	for i, offset := 0, 50; i < nreqs; i++ {
 		req, err = clt.NewGenreSearch(query, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		requests = append(requests, req)
+		requests[i] = req
 		offset += 50
 	}
 
@@ -184,7 +186,6 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 			for j, artist := range res.Artists {
 				artists[50+(50*i)+j] = artist
 			}
-			fmt.Println(len(artists))
 		}(i, req)
 	}
 	wg.Wait()
@@ -205,16 +206,15 @@ var clt *client.Client
 var lg *log.Logger
 
 func init() {
-	var err error
-	clt, err = client.New()
-	if err != nil {
-		panic(err.Error() + "\n" + "panicking because we couldn't initialize client")
+	clt = client.New()
+	if clt == nil {
+		panic("panicking because we couldn't initialize client\n")
 	}
 	lg = log.New(os.Stdout, "", log.Ltime)
 	clt.Lg = lg
-	err = clt.Authorize()
-	if err != nil {
-		panic(err.Error() + "\n" + "panicing because we couldn't authorize client")
+	clt.Authorize()
+	if clt.AccessToken == "" {
+		panic("panicing because we couldn't authorize client\n")
 	}
 }
 
