@@ -13,10 +13,10 @@ type TracksResponse struct {
 type TracksBody struct {
 	Href   string  `json:"href"`
 	Tracks []Track `json:"items"`
-	Next   string  `json:"next"`
-	Limit  int     `json:"limit"`
-	Offset int     `json:"offset"`
-	Total  int     `json:"total"`
+	//Next   string  `json:"next"`
+	//Limit  int     `json:"limit"`
+	//Offset int     `json:"offset"`
+	Total int `json:"total"`
 }
 
 type Track struct {

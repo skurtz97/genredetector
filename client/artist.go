@@ -40,10 +40,10 @@ func (res *ArtistsResponse) ToJSON(w io.Writer) error {
 type ArtistsBody struct {
 	Href    string   `json:"href"`
 	Artists []Artist `json:"items"`
-	Next    string   `json:"next"`
-	Limit   int      `json:"limit"`
-	Offset  int      `json:"offset"`
-	Total   int      `json:"total"`
+	//Next    string   `json:"next"`
+	//Limit   int      `json:"limit"`
+	//Offset  int      `json:"offset"`
+	Total int `json:"total"`
 }
 
 // serializes an artist slice to json
