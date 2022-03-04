@@ -134,12 +134,29 @@ func SortArtists(artists []Artist) []Artist {
 
 // returns true if the genres slice contains the specified genre
 func GenresContains(genres []string, genre string) bool {
-	for _, g := range genres {
+	for i, g := range genres {
 		if g == genre {
+			temp := genres[0]
+			genres[0] = genres[i]
+			genres[i] = temp
 			return true
 		}
 	}
 	return false
+}
+
+// same as genres contains but we don't care about the boolean
+// since this function always gets called by itself and not inside exact matches
+func SortGenres(genre string, artists []Artist) {
+	for i := range artists {
+		for j := range artists[i].Genres {
+			if artists[i].Genres[j] == genre {
+				temp := artists[i].Genres[0]
+				artists[i].Genres[0] = artists[i].Genres[j]
+				artists[i].Genres[j] = temp
+			}
+		}
+	}
 }
 
 // returns a new copy of artists that only includes artists that have a genre in Genres that exactly matches genre
