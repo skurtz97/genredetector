@@ -13,12 +13,12 @@ Accept: application/json
 
 ###
 
-GET http://localhost:8080/search/genre?q=rock HTTP/2.0
+GET http://localhost:8080/search/genre?q="rock"&partial=true HTTP/2.0
 Content-Type: application/json
 Accept: application/json
 
 ###
-GET http://localhost:8080/search/genre?q="rock" HTTP/2.0
+GET http://localhost:8080/search/genre?q=rock HTTP/2.0
 Content-Type: application/json
 Accept: application/json
 

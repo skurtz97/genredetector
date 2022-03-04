@@ -1,4 +1,4 @@
-module app
+module genredetector
 
 go 1.17
 

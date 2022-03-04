@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"genredetector/auth"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	"app/auth"
 )
 
 var ErrCreateRequest = errors.New("failed to create a new search request")
@@ -55,7 +54,7 @@ func (c *Client) Authorize() error {
 		return err
 	}
 	c.AccessToken = token
-	c.AuthorizedAt = time.Now()
+	c.AuthorizedAt = (time.Now())
 	return nil
 }
 func (c *Client) GetToken() (string, error) {

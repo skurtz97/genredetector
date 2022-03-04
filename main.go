@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -10,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"app/client"
+	"genredetector/client"
 
 	"github.com/gorilla/mux"
 )
@@ -123,22 +124,15 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
-	genreQueryStr := r.URL.Query().Get("q")
-	genreQueryStr = FormatQueryString(genreQueryStr)
-	genre, err := url.QueryUnescape(genreQueryStr)
+	query := FormatQueryString(r.URL.Query().Get("q"))
+	genre, err := url.QueryUnescape(query)
 	if err != nil {
-		lg.Println("failed to unescape genre query string")
+		http.Error(w, "failed to unescape query string", http.StatusBadRequest)
 	}
 	genre = strings.Trim(genre, "\"")
+	partial := r.URL.Query().Get("partial") == "true"
 
-	partial := false
-	if r.URL.Query().Get("partial") == "true" {
-		partial = true
-	}
-
-	artists := make([]client.Artist, 0, 1000)
-
-	req, err := clt.NewGenreSearch(genreQueryStr, 0)
+	req, err := clt.NewGenreSearch(query, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -149,34 +143,48 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	total := res.Total
-	// max offset will always be 950 due to spotify limitations
+	fmt.Printf("total: %d\n", total)
 	if total > 1000 {
+		fmt.Println("resetting total...")
 		total = 1000
 	}
-	offset := 50
+	fmt.Printf("total: %d\n", total)
+	nreqs := (total / 50) - 1
+	if ((total / 50) - 1) > 19 {
+		nreqs = 19
+	}
+	fmt.Printf("nreqs: %d\n", nreqs)
 
+	artists := make([]client.Artist, total, total+1)
+	fmt.Printf("len(artists): %d\n", len(artists))
 	artists = append(artists, res.Artists...)
-	queue := make([]*http.Request, 0, 19)
 
-	for i := 0; i <= ((total/50)-1) && (i <= 18); i++ {
-		req, err = clt.NewGenreSearch(genreQueryStr, offset)
+	requests := make([]*http.Request, 0, 19)
+
+	for i, offset := 0, 50; i < nreqs; i++ {
+		req, err = clt.NewGenreSearch(query, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		queue = append(queue, req)
+		requests = append(requests, req)
 		offset += 50
 	}
 
 	wg := sync.WaitGroup{}
-	for i, req := range queue {
+	for i, req := range requests {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
+			defer wg.Done()
 			res, err := clt.GenreSearch(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-			artists = append(artists, res.Artists...)
-			wg.Done()
+			// putting artist in explicit indexes is an alternative to using a mutex and appending
+			// mutex.Lock(); artists = append(artists, res.Artists...); mutex.Unlock()
+			for j, artist := range res.Artists {
+				artists[50+(50*i)+j] = artist
+			}
+			fmt.Println(len(artists))
 		}(i, req)
 	}
 	wg.Wait()
