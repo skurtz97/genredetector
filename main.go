@@ -59,11 +59,6 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	artistQueryStr := r.URL.Query().Get("q")
 	artistQueryStr = FormatQueryString(artistQueryStr)
-	artist, err := url.QueryUnescape(artistQueryStr)
-	if err != nil {
-		lg.Println("failed to unescape genre query string")
-	}
-	artist = strings.Trim(artist, "\"")
 
 	artists := make([]client.Artist, 0, 300)
 	req, err := clt.NewArtistSearch(artistQueryStr, 0)
@@ -75,34 +70,32 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	total := res.Total
-	// max offset will always be 950 due to spotify limitations
-	if total > 1000 {
-		total = 1000
-	}
-	offset := 50
+	total := getTotal(res.Total)
+	nreqs := getNumRequests(total)
 
 	artists = append(artists, res.Artists...)
-	queue := make([]*http.Request, 0, 19)
+	requests := make([]*http.Request, nreqs)
 
-	for i := 0; i <= ((total/50)-1) && (i <= 18); i++ {
+	for i, offset := 0, 50; i <= nreqs; i++ {
 		req, err = clt.NewArtistSearch(artistQueryStr, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		queue = append(queue, req)
+		requests = append(requests, req)
 		offset += 50
 	}
 
 	wg := sync.WaitGroup{}
-	for i, req := range queue {
+	for i, req := range requests {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
 			res, err := clt.ArtistSearch(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-			artists = append(artists, res.Artists...)
+			for j, artist := range res.Artists {
+				artists[50+(50*i)+j] = artist
+			}
 			wg.Done()
 		}(i, req)
 	}
