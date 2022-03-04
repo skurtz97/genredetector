@@ -23,7 +23,7 @@ Content-Type: application/json
 Accept: application/json
 
 ###
-GET http://localhost:8080/search/genre?q="RaP" HTTP/2.0
+GET http://localhost:8080/search/genre?q="RaP"&partial=true HTTP/2.0
 Content-Type: application/json
 Accept: application/json
 
@@ -35,6 +35,13 @@ Accept: application/json
 
 ### ARTIST SEARCH TESTS
 GET http://localhost:8080/search/artist?q=daft punk HTTP/2.0
+Content-Type: application/json
+Accept: application/json
+
+
+### TRACK SEARCH TESTS
+
+GET http://localhost:8080/search/track?q=Contact HTTP/2.0
 Content-Type: application/json
 Accept: application/json
 

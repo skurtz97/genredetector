@@ -7,8 +7,8 @@ import (
 	"sort"
 )
 
-var ErrDecodeResponse = errors.New("failed to decode genre search response from json")
-var ErrEncodeResponse = errors.New("failed to encode genre search response to json")
+var ErrDecodeArtistsResponse = errors.New("failed to decode genre search response from json")
+var ErrEncodeArtistsResponse = errors.New("failed to encode genre search response to json")
 var ErrEncodeArtists = errors.New("failed to encode artists to json")
 var ErrDecodeArtists = errors.New("failed to decode artists from json")
 var ErrEncodeArtist = errors.New("failed to encode artist to json")
@@ -16,14 +16,14 @@ var ErrDecodeArtist = errors.New("failed to decode artist from json")
 
 // response
 type ArtistsResponse struct {
-	*Body `json:"artists"`
+	*ArtistsBody `json:"artists"`
 }
 
 // deserializes a response struct from json
 func (res *ArtistsResponse) FromJSON(r io.Reader) error {
 	err := json.NewDecoder(r).Decode(res)
 	if err != nil {
-		return ErrDecodeResponse
+		return ErrDecodeArtistsResponse
 	}
 	return nil
 }
@@ -32,12 +32,12 @@ func (res *ArtistsResponse) FromJSON(r io.Reader) error {
 func (res *ArtistsResponse) ToJSON(w io.Writer) error {
 	err := json.NewEncoder(w).Encode(res)
 	if err != nil {
-		return ErrEncodeResponse
+		return ErrEncodeArtistsResponse
 	}
 	return nil
 }
 
-type Body struct {
+type ArtistsBody struct {
 	Href    string   `json:"href"`
 	Artists []Artist `json:"items"`
 	Next    string   `json:"next"`
@@ -47,7 +47,7 @@ type Body struct {
 }
 
 // serializes an artist slice to json
-func ToJSON(w io.Writer, as []Artist) error {
+func ArtistsToJSON(w io.Writer, as []Artist) error {
 	err := json.NewEncoder(w).Encode(as)
 	if err != nil {
 		return ErrEncodeArtists
@@ -56,7 +56,7 @@ func ToJSON(w io.Writer, as []Artist) error {
 }
 
 // deserializes an artist slice from json
-func FromJSON(r io.Reader, as []Artist) error {
+func ArtistsFromJSON(r io.Reader, as []Artist) error {
 	err := json.NewDecoder(r).Decode(&as)
 	if err != nil {
 		return ErrDecodeArtists

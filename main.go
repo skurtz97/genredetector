@@ -104,7 +104,7 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	err = client.ToJSON(w, artists)
+	err = client.ArtistsToJSON(w, artists)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -124,6 +124,66 @@ func getNumRequests(total int) int {
 	} else {
 		return (total / 50)
 	}
+}
+
+func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+	query := FormatQueryString(r.URL.Query().Get("q"))
+
+	req, err := clt.NewTrackSearch(query, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	res, err := clt.TrackSearch(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	total := getTotal(res.Total)
+	clt.Lg.Printf("total: %d", total)
+	nreqs := getNumRequests(res.Total)
+	tracks := make([]client.Track, 0, total)
+	tracks = append(tracks, res.Tracks...)
+	requests := make([]*http.Request, nreqs)
+
+	for i, offset := 0, 50; i < nreqs; i++ {
+		req, err = clt.NewTrackSearch(query, offset)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		requests[i] = req
+		offset += 50
+	}
+
+	clt.Lg.Printf("\ntotal: %d\t nreqs: %d\t len(tracks): %d\t len(requests): %d", total, nreqs, len(tracks), len(requests))
+	wg := sync.WaitGroup{}
+	var m sync.Mutex
+	for i, req := range requests {
+		wg.Add(1)
+		go func(i int, req *http.Request) {
+			defer wg.Done()
+			res, err := clt.TrackSearch(req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			// putting artist in explicit indexes is an alternative to using a mutex and appending
+			// mutex.Lock(); artists = append(artists, res.Artists...); mutex.Unlock()
+			m.Lock()
+			tracks = append(tracks, res.Tracks...)
+			m.Unlock()
+
+		}(i, req)
+	}
+	wg.Wait()
+
+	err = client.TracksToJSON(w, tracks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -189,7 +249,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	err = client.ToJSON(w, artists)
+	err = client.ArtistsToJSON(w, artists)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -216,6 +276,8 @@ func main() {
 	r.HandleFunc("/search/genre", GenreSearchHandler)
 	r.HandleFunc("/search/artist", ArtistSearchHandler)
 	r.HandleFunc("/search/artist/{id}", ArtistIdSearchHandler)
+	r.HandleFunc("/search/track", TrackSearchHandler)
+
 	s := &http.Server{
 		Handler:      r,
 		Addr:         "localhost:8080",
