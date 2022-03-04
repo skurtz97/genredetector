@@ -119,10 +119,10 @@ func getTotal(total int) int {
 	}
 }
 func getNumRequests(total int) int {
-	if ((total / 50) - 1) > 19 {
+	if (total / 50) > 19 {
 		return 19
 	} else {
-		return ((total / 50) - 1)
+		return (total / 50)
 	}
 }
 
@@ -150,10 +150,8 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	total := getTotal(res.Total)
 	nreqs := getNumRequests(res.Total)
-	artists := make([]client.Artist, total)
-	for i, artist := range res.Artists {
-		artists[i] = artist
-	}
+	artists := make([]client.Artist, 0, total)
+	artists = append(artists, res.Artists...)
 	requests := make([]*http.Request, nreqs)
 
 	for i, offset := 0, 50; i < nreqs; i++ {
@@ -166,6 +164,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wg := sync.WaitGroup{}
+	var m sync.Mutex
 	for i, req := range requests {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
@@ -176,9 +175,10 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			// putting artist in explicit indexes is an alternative to using a mutex and appending
 			// mutex.Lock(); artists = append(artists, res.Artists...); mutex.Unlock()
-			for j, artist := range res.Artists {
-				artists[50+(50*i)+j] = artist
-			}
+			m.Lock()
+			artists = append(artists, res.Artists...)
+			m.Unlock()
+
 		}(i, req)
 	}
 	wg.Wait()
