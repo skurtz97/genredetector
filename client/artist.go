@@ -46,6 +46,24 @@ type ArtistsBody struct {
 	Total int `json:"total"`
 }
 
+// deserializes an artists request body from json
+func (ab *ArtistsBody) FromJSON(r io.Reader) error {
+	err := json.NewDecoder(r).Decode(ab)
+	if err != nil {
+		return ErrDecodeArtists
+	}
+	return nil
+}
+
+// serializes an artists request body to json
+func (ab *ArtistsBody) ToJSON(w io.Writer) error {
+	err := json.NewEncoder(w).Encode(ab)
+	if err != nil {
+		return ErrDecodeArtists
+	}
+	return nil
+}
+
 // serializes an artist slice to json
 func ArtistsToJSON(w io.Writer, as []Artist) error {
 	err := json.NewEncoder(w).Encode(as)
@@ -75,14 +93,6 @@ type Artist struct {
 
 type ExternalUrls struct {
 	Spotify string `json:"spotify"`
-}
-
-func (ab *ArtistsBody) ToJSON(w io.Writer) error {
-	err := json.NewEncoder(w).Encode(ab)
-	if err != nil {
-		return ErrEncodeArtists
-	}
-	return nil
 }
 
 func (a *Artist) FromJSON(r io.Reader) error {
