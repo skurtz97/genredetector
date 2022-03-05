@@ -39,7 +39,6 @@ func NewServer(addr string, dev bool) *http.Server {
 	r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET", "OPTIONS")
 	r.HandleFunc("/", IndexHandler).Methods("GET", "OPTIONS")
-	mux.CORSMethodMiddleware(r)
 
 	s := &http.Server{
 		Handler:      r,

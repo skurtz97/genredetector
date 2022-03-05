@@ -29,6 +29,7 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		return
 	}
+
 	query := formatQueryString(r.URL.Query().Get("q"))
 	genre, err := url.QueryUnescape(query)
 	if err != nil {
