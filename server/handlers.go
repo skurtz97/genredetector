@@ -64,7 +64,6 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 			m.Lock()
 			artists = append(artists, res.Artists...)
 			m.Unlock()
-
 		}(i, req)
 	}
 	wg.Wait()
@@ -89,7 +88,6 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	query = formatQueryString(query)
 
-	artists := make([]client.Artist, 0, 300)
 	req, err := c.NewArtistSearch(query, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -101,31 +99,33 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	total := getTotal(res.Total)
 	nreqs := getNumRequests(total)
-
+	artists := make([]client.Artist, 0, total)
 	artists = append(artists, res.Artists...)
 	requests := make([]*http.Request, nreqs)
 
-	for i, offset := 0, 50; i <= nreqs; i++ {
+	for i, offset := 0, 50; i < nreqs; i++ {
 		req, err = c.NewArtistSearch(query, offset)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		requests = append(requests, req)
+		requests[i] = req
 		offset += 50
 	}
 
+	lg.Printf("total: %d\t nreqs: %d\t len(artists): %d\t len(requests): %d\n", total, nreqs, len(artists), len(requests))
 	wg := sync.WaitGroup{}
+	var m sync.Mutex
 	for i, req := range requests {
 		wg.Add(1)
 		go func(i int, req *http.Request) {
+			defer wg.Done()
 			res, err := c.ArtistSearch(req)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-			for j, artist := range res.Artists {
-				artists[50+(50*i)+j] = artist
-			}
-			wg.Done()
+			m.Lock()
+			artists = append(artists, res.Artists...)
+			m.Unlock()
 		}(i, req)
 	}
 	wg.Wait()
