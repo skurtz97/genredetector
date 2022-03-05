@@ -12,12 +12,20 @@ type TracksResponse struct {
 }
 
 type TracksBody struct {
-	Href   string  `json:"href"`
+	//Href   string  `json:"href"`
 	Tracks []Track `json:"items"`
 	//Next   string  `json:"next"`
 	//Limit  int     `json:"limit"`
 	//Offset int     `json:"offset"`
 	Total int `json:"total"`
+}
+
+func (tb *TracksBody) ToJSON(w io.Writer) error {
+	err := json.NewEncoder(w).Encode(tb)
+	if err != nil {
+		return ErrEncodeTracks
+	}
+	return nil
 }
 
 type Track struct {

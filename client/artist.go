@@ -38,7 +38,7 @@ func (res *ArtistsResponse) ToJSON(w io.Writer) error {
 }
 
 type ArtistsBody struct {
-	Href    string   `json:"href"`
+	//Href    string   `json:"href"`
 	Artists []Artist `json:"items"`
 	//Next    string   `json:"next"`
 	//Limit   int      `json:"limit"`
@@ -75,6 +75,14 @@ type Artist struct {
 
 type ExternalUrls struct {
 	Spotify string `json:"spotify"`
+}
+
+func (ab *ArtistsBody) ToJSON(w io.Writer) error {
+	err := json.NewEncoder(w).Encode(ab)
+	if err != nil {
+		return ErrEncodeArtists
+	}
+	return nil
 }
 
 func (a *Artist) FromJSON(r io.Reader) error {

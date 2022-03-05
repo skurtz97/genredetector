@@ -13,12 +13,22 @@ import (
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	if r.Method == "OPTIONS" {
+		return
+	}
 	w.WriteHeader(200)
 	w.Write([]byte("Welcome to Genre Detector"))
 }
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	if r.Method == "OPTIONS" {
+		return
+	}
 	query := formatQueryString(r.URL.Query().Get("q"))
 	genre, err := url.QueryUnescape(query)
 	if err != nil {
@@ -84,7 +94,12 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	if r.Method == "OPTIONS" {
+		return
+	}
 	query := r.URL.Query().Get("q")
 	query = formatQueryString(query)
 
@@ -140,7 +155,12 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	if r.Method == "OPTIONS" {
+		return
+	}
 	query := formatQueryString(r.URL.Query().Get("q"))
 
 	req, err := c.NewTrackSearch(query, 0)
@@ -197,7 +217,12 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	if r.Method == "OPTIONS" {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
@@ -216,7 +241,12 @@ func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	if r.Method == "OPTIONS" {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
@@ -236,7 +266,12 @@ func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 func NewIdSearchHandler(t SearchType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "https://genredetector.com")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTION, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		if r.Method == "OPTIONS" {
+			return
+		}
 		id := mux.Vars(r)["id"]
 		fmt.Println(id)
 		id = strings.Trim(id, " ")
