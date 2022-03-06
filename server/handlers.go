@@ -75,7 +75,12 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	err = client.ArtistsToJSON(w, artists)
+	body := client.ArtistsBody{
+		Total:   total,
+		Length:  len(artists),
+		Artists: artists,
+	}
+	err = body.ToJSON(w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -133,7 +138,12 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	err = client.ArtistsToJSON(w, artists)
+	body := client.ArtistsBody{
+		Total:   total,
+		Length:  len(artists),
+		Artists: artists,
+	}
+	err = body.ToJSON(w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -191,10 +201,12 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	tracks = client.SortTracks(tracks)
 	lg.Printf("sending %d/%d artists to client", len(tracks), total)
-	err = client.TracksToJSON(w, tracks)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	body := client.TracksBody{
+		Total:  total,
+		Length: len(tracks),
+		Tracks: tracks,
 	}
+	err = body.ToJSON(w)
 
 }
 

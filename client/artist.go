@@ -43,7 +43,8 @@ type ArtistsBody struct {
 	//Next    string   `json:"next"`
 	//Limit   int      `json:"limit"`
 	//Offset  int      `json:"offset"`
-	Total int `json:"total"`
+	Total  int `json:"total"`
+	Length int `json:"length"`
 }
 
 // deserializes an artists request body from json

@@ -14,6 +14,7 @@ type TracksResponse struct {
 type TracksBody struct {
 	Tracks []Track `json:"items"`
 	Total  int     `json:"total"`
+	Length int     `json:"length"`
 }
 
 func (tb *TracksBody) ToJSON(w io.Writer) error {

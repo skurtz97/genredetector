@@ -11,6 +11,9 @@ var ErrParseForm = errors.New("error parsing incoming request form")
 
 func main() {
 	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
 	s := server.NewServer("localhost:"+port, false)
 	log.Printf("listening on %s", s.Addr)
