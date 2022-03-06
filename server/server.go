@@ -38,7 +38,7 @@ func NewServer(addr string, dev bool) *http.Server {
 	r.HandleFunc("/search/artist/{id}", NewIdSearchHandler(Artist)).Methods("GET", "OPTIONS")
 	r.HandleFunc("/search/track", TrackSearchHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/search/track/{id}", NewIdSearchHandler(Track)).Methods("GET", "OPTIONS")
-	r.HandleFunc("/", IndexHandler).Methods("GET", "OPTIONS")
+	r.Use(middlewareCORS)
 
 	s := &http.Server{
 		Handler:      r,
