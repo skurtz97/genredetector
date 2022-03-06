@@ -62,9 +62,6 @@ func getRequestHeader(token string) map[string][]string {
 }
 
 func (c *Client) NewGenreSearch(genre string, offset int) (*http.Request, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	url := "https://api.spotify.com/v1/search?q=genre:" + genre + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -74,9 +71,6 @@ func (c *Client) NewGenreSearch(genre string, offset int) (*http.Request, error)
 	return req, nil
 }
 func (c *Client) NewArtistSearch(artist string, offset int) (*http.Request, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	url := "https://api.spotify.com/v1/search?q=artist:" + artist + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -126,9 +120,6 @@ func (c *Client) NewTrackSearch(track string, offset int) (*http.Request, error)
 }
 
 func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
@@ -146,11 +137,7 @@ func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 
 }
 
-// when Go adds generics in 1.18, these are all going to become a single function
 func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
@@ -166,9 +153,6 @@ func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
 }
 
 func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
@@ -186,9 +170,6 @@ func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 }
 
 func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
@@ -206,9 +187,6 @@ func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
 }
 
 func (c *Client) TrackIdSearch(r *http.Request) (*Track, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {

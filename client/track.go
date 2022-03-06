@@ -12,12 +12,8 @@ type TracksResponse struct {
 }
 
 type TracksBody struct {
-	//Href   string  `json:"href"`
 	Tracks []Track `json:"items"`
-	//Next   string  `json:"next"`
-	//Limit  int     `json:"limit"`
-	//Offset int     `json:"offset"`
-	Total int `json:"total"`
+	Total  int     `json:"total"`
 }
 
 func (tb *TracksBody) ToJSON(w io.Writer) error {
@@ -38,7 +34,6 @@ type Track struct {
 }
 
 type Album struct {
-	Href        string `json:"href"`
 	Id          string `json:"id"`
 	Name        string `json:"name"`
 	ReleaseDate string `json:"release_date"`
