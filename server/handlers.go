@@ -2,21 +2,18 @@ package server
 
 import (
 	"fmt"
+	"genredetector/client"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
-	"time"
-
-	"genredetector/client"
 
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
+	c.MaybeRefresh()
 	query := formatQueryString(r.URL.Query().Get("q"))
 	genre, err := url.QueryUnescape(query)
 	if err != nil {
@@ -75,21 +72,19 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	body := client.ArtistsBody{
+	err = jsoniter.NewEncoder(w).Encode(client.ArtistsBody{
 		Total:   total,
 		Length:  len(artists),
 		Artists: artists,
-	}
-	err = body.ToJSON(w)
+	})
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
+	c.MaybeRefresh()
 	query := r.URL.Query().Get("q")
 	query = formatQueryString(query)
 
@@ -138,21 +133,18 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	artists = client.SortArtists(artists)
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
-	body := client.ArtistsBody{
+	err = jsoniter.NewEncoder(w).Encode(client.ArtistsBody{
 		Total:   total,
 		Length:  len(artists),
 		Artists: artists,
-	}
-	err = body.ToJSON(w)
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
+	c.MaybeRefresh()
 	query := formatQueryString(r.URL.Query().Get("q"))
 
 	req, err := c.NewTrackSearch(query, 0)
@@ -211,9 +203,7 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
+	c.MaybeRefresh()
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
@@ -232,9 +222,7 @@ func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
+	c.MaybeRefresh()
 	id := mux.Vars(r)["id"]
 	id = strings.Trim(id, " ")
 
@@ -254,9 +242,7 @@ func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 func NewIdSearchHandler(t SearchType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-			c.Authorize()
-		}
+		c.MaybeRefresh()
 		id := mux.Vars(r)["id"]
 		fmt.Println(id)
 		id = strings.Trim(id, " ")

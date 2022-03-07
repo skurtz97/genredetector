@@ -20,13 +20,13 @@ var (
 func init() {
 	c = client.New()
 	if c == nil {
-		panic("panicking because we couldn't initialize client\n")
+		panic("panicked because we couldn't initialize client\n")
 	}
 	lg = log.New(os.Stdout, "", log.Ltime)
 	c.SetLogger(lg)
 	c.Authorize()
 	if c.AccessToken == "" {
-		panic("panicing because we couldn't authorize client\n")
+		panic("panicked because we couldn't authorize client\n")
 	}
 }
 

@@ -1,11 +1,8 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"genredetector/auth"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -22,36 +19,19 @@ var ErrTrackIdSearch = errors.New("failed doing track id search")
 
 type Client struct {
 	*http.Client
-	*auth.Auth
 	lg *log.Logger
+	*Auth
 }
 
-type SpotifyError struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-}
+type RequestKind int
 
-type SpotifyErrorResponse struct {
-	*SpotifyError `json:"error"`
-}
-
-// serializes a response struct to json
-func (ser *SpotifyErrorResponse) ToJSON(w io.Writer) error {
-	err := json.NewEncoder(w).Encode(ser)
-	if err != nil {
-		return ErrEncodeArtistsResponse
-	}
-	return nil
-}
-
-// deserializes a spotify error response struct from json
-func (ser *SpotifyErrorResponse) FromJSON(r io.Reader) error {
-	err := json.NewDecoder(r).Decode(ser)
-	if err != nil {
-		return ErrDecodeArtistsResponse
-	}
-	return nil
-}
+const (
+	GENRE RequestKind = iota
+	ARTIST
+	ARTIST_ID
+	TRACK
+	TRACK_ID
+)
 
 func getRequestHeader(token string) map[string][]string {
 	return map[string][]string{
@@ -65,7 +45,7 @@ func (c *Client) NewGenreSearch(genre string, offset int) (*http.Request, error)
 	url := "https://api.spotify.com/v1/search?q=genre:" + genre + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, ErrCreateRequest
+		return nil, ErrCreateAuthRequest
 	}
 	req.Header = getRequestHeader(c.AccessToken)
 	return req, nil
@@ -74,53 +54,43 @@ func (c *Client) NewArtistSearch(artist string, offset int) (*http.Request, erro
 	url := "https://api.spotify.com/v1/search?q=artist:" + artist + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, ErrCreateRequest
+		return nil, ErrCreateAuthRequest
 	}
 	req.Header = getRequestHeader(c.AccessToken)
 	return req, nil
 }
 
 func (c *Client) NewArtistIdSearch(id string) (*http.Request, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	url := "https://api.spotify.com/v1/artists/" + id
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, ErrCreateRequest
+		return nil, ErrCreateAuthRequest
 	}
 	req.Header = getRequestHeader(c.AccessToken)
 	return req, nil
 }
 
 func (c *Client) NewTrackIdSearch(id string) (*http.Request, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	url := "https://api.spotify.com/v1/tracks/" + id
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, ErrCreateRequest
+		return nil, ErrCreateAuthRequest
 	}
 	req.Header = getRequestHeader(c.AccessToken)
 	return req, nil
 }
 
 func (c *Client) NewTrackSearch(track string, offset int) (*http.Request, error) {
-	if time.Now().Unix() > c.AuthorizedAt.Unix()+3200 {
-		c.Authorize()
-	}
 	url := "https://api.spotify.com/v1/search?q=track:" + track + "&type=track&limit=50&offset=" + fmt.Sprint(offset)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, ErrCreateRequest
+		return nil, ErrCreateAuthRequest
 	}
 	req.Header = getRequestHeader(c.AccessToken)
 	return req, nil
 }
 
 func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
-	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrArtistIdSearch
@@ -138,7 +108,6 @@ func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 }
 
 func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
-	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrArtistSearch
@@ -153,7 +122,6 @@ func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
 }
 
 func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
-	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrGenreSearch
@@ -170,7 +138,6 @@ func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 }
 
 func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
-	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrTrackSearch
@@ -187,7 +154,6 @@ func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
 }
 
 func (c *Client) TrackIdSearch(r *http.Request) (*Track, error) {
-	c.lg.Printf("\033[32m%s: \033[33m%s \033[0m \n", r.Method, r.URL)
 	res, err := c.Do(r)
 	if err != nil {
 		return nil, ErrTrackSearch
@@ -210,7 +176,7 @@ func New() *Client {
 		Client: &http.Client{
 			Timeout: time.Duration(10) * time.Second,
 		},
-		Auth: auth.New(),
+		Auth: NewAuth(),
 		lg:   log.Default(),
 	}
 }

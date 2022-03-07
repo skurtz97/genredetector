@@ -1,4 +1,4 @@
-package auth
+package client
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 )
 
 var ErrCredentials = errors.New("client authorization does not have valid client id or client secret")
-var ErrCreateRequest = errors.New("failed to generate a new http request for authorization")
+var ErrCreateAuthRequest = errors.New("failed to generate a new http request for authorization")
 var ErrRequest = errors.New("authorization request to spotify failed")
 var ErrDecode = errors.New("failed to decode authorization from json")
 var ErrEncode = errors.New("failed to encode authorization to json")
@@ -76,7 +76,7 @@ func (a *Auth) ShouldRefresh() bool {
 	return (a.AuthorizedAt.After(a.AuthorizedAt.Add(time.Duration(3200) * time.Second)))
 }
 
-func New() *Auth {
+func NewAuth() *Auth {
 	cid, csec := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET")
 	if cid == "" || csec == "" {
 		return &Auth{
@@ -116,6 +116,12 @@ func (a *Auth) Authorize() {
 	token := a.GetToken()
 	a.AccessToken = token
 	a.AuthorizedAt = (time.Now())
+}
+
+func (a *Auth) MaybeRefresh() {
+	if time.Now().Unix() > a.AuthorizedAt.Unix()+3200 {
+		a.Authorize()
+	}
 }
 
 func (a *Auth) GetToken() string {
