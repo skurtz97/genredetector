@@ -1,11 +1,13 @@
 package client
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -21,6 +23,7 @@ type Client struct {
 	*http.Client
 	lg *log.Logger
 	*Auth
+	config map[string]string
 }
 
 type RequestKind int
@@ -167,17 +170,37 @@ func (c *Client) TrackIdSearch(r *http.Request) (*Track, error) {
 	return sr, nil
 }
 
-func New() *Client {
-	cid, csec := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET")
-	if cid == "" || csec == "" {
-		return nil
+func readConfig() map[string]string {
+	file, err := os.Open(".env")
+	if err != nil {
+		panic("failed to open config")
 	}
+	config := make(map[string]string)
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	for i := range lines {
+		splitStr := strings.Split(lines[i], "=")
+		key, value := splitStr[0], splitStr[1]
+		config[key] = value
+	}
+
+	return config
+}
+
+func New() *Client {
+	config := readConfig()
 	return &Client{
 		Client: &http.Client{
 			Timeout: time.Duration(10) * time.Second,
 		},
-		Auth: NewAuth(),
-		lg:   log.Default(),
+		Auth:   NewAuth(config["CLIENT_ID"], config["CLIENT_SECRET"]),
+		lg:     log.Default(),
+		config: config,
 	}
 }
 

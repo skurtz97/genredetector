@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -76,9 +75,9 @@ func (a *Auth) ShouldRefresh() bool {
 	return (a.AuthorizedAt.After(a.AuthorizedAt.Add(time.Duration(3200) * time.Second)))
 }
 
-func NewAuth() *Auth {
-	cid, csec := os.Getenv("SPOTIFY_CLIENT_ID"), os.Getenv("SPOTIFY_CLIENT_SECRET")
-	if cid == "" || csec == "" {
+func NewAuth(id string, secret string) *Auth {
+
+	if id == "" || secret == "" {
 		return &Auth{
 			Id:           "",
 			Secret:       "",
@@ -87,8 +86,8 @@ func NewAuth() *Auth {
 		}
 	} else {
 		return &Auth{
-			Id:           cid,
-			Secret:       csec,
+			Id:           id,
+			Secret:       secret,
 			AccessToken:  "",
 			AuthorizedAt: time.Time{},
 		}
