@@ -18,10 +18,10 @@ type Client struct {
 	config map[string]string
 }
 
-type RequestKind int
+type SearchKind int
 
 const (
-	GENRE RequestKind = iota
+	GENRE SearchKind = iota
 	ARTIST
 	ARTIST_ID
 	TRACK
@@ -36,7 +36,7 @@ func getRequestHeader(token string) map[string][]string {
 	}
 }
 
-func (c *Client) NewSearchRequest(query string, kind RequestKind, offset int) (*http.Request, error) {
+func (c *Client) NewSearchRequest(query string, kind SearchKind, offset int) (*http.Request, error) {
 	header := getRequestHeader(c.AccessToken)
 	var req *http.Request
 	var err error
