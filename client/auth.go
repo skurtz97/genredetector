@@ -35,37 +35,30 @@ func (a *Auth) ShouldRefresh() bool {
 func NewAuth(id string, secret string) *Auth {
 
 	if id == "" || secret == "" {
-		return &Auth{
-			Id:           "",
-			Secret:       "",
-			AccessToken:  "",
-			AuthorizedAt: time.Time{},
-		}
-	} else {
-		return &Auth{
-			Id:           id,
-			Secret:       secret,
-			AccessToken:  "",
-			AuthorizedAt: time.Time{},
-		}
+		panic("id or secret missing")
 	}
+	return &Auth{
+		Id:           id,
+		Secret:       secret,
+		AccessToken:  "",
+		AuthorizedAt: time.Time{},
+	}
+
 }
 
 func (a *Auth) NewAuthRequest() *http.Request {
-	if a.Id == "" || a.Secret == "" {
+
+	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token?grant_type=client_credentials", nil)
+	if err != nil {
 		return nil
-	} else {
-		req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token?grant_type=client_credentials", nil)
-		if err != nil {
-			return nil
-		}
-		req.Header = map[string][]string{
-			"Accept":       {"application/json"},
-			"Content-Type": {"application/x-www-form-urlencoded"},
-		}
-		req.SetBasicAuth(a.Id, a.Secret)
-		return req
 	}
+	req.Header = map[string][]string{
+		"Accept":       {"application/json"},
+		"Content-Type": {"application/x-www-form-urlencoded"},
+	}
+	req.SetBasicAuth(a.Id, a.Secret)
+	return req
+
 }
 
 func (a *Auth) Authorize() {
