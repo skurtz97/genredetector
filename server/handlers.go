@@ -233,7 +233,10 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
-	tracks = client.SortTracks(tracks)
+	sort.Slice(tracks, func(i, j int) bool {
+		return tracks[i].Popularity > tracks[j].Popularity
+	})
+
 	lg.Printf("sending %d/%d artists to client", len(tracks), total)
 	body := client.TracksBody{
 		Total:  total,
