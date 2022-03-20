@@ -1,9 +1,8 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
+	"genredetector/util"
 	"net/http"
 	"time"
 )
@@ -26,48 +25,6 @@ type Auth struct {
 
 type AuthToken struct {
 	AccessToken string `json:"access_token"`
-}
-
-// deserializes an auth token from json
-func (at *AuthToken) FromJSON(r io.Reader) error {
-	err := json.NewDecoder(r).Decode(at)
-	if err != nil {
-		return ErrTokenDecode
-	}
-	if at.AccessToken == "" {
-		return ErrTokenMissing
-	}
-	return nil
-}
-
-// serializes an auth token to json
-func (at *AuthToken) ToJSON(w io.Writer) error {
-	err := json.NewEncoder(w).Encode(at)
-	if err != nil {
-		return ErrTokenEncode
-	}
-	return nil
-}
-
-// deserializes an auth struct from json
-func (a *Auth) FromJSON(r io.Reader) error {
-	err := json.NewDecoder(r).Decode(a)
-	if err != nil {
-		return ErrDecode
-	}
-	if a.AccessToken == "" {
-		return ErrTokenMissing
-	}
-	return nil
-}
-
-// serializes an auth struct to json
-func (a *Auth) ToJSON(w io.Writer) error {
-	err := json.NewEncoder(w).Encode(a)
-	if err != nil {
-		return ErrEncode
-	}
-	return nil
 }
 
 // returns true if it has been more than 3200 seconds since last authorization
@@ -133,7 +90,7 @@ func (a *Auth) getToken() string {
 	defer res.Body.Close()
 
 	token := AuthToken{}
-	err = token.FromJSON(res.Body)
+	err = util.FromJSON(res.Body, &token)
 	if err != nil {
 		return ""
 	}
