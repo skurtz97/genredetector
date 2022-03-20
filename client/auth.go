@@ -1,20 +1,10 @@
 package client
 
 import (
-	"errors"
 	"genredetector/util"
 	"net/http"
 	"time"
 )
-
-var ErrCredentials = errors.New("client authorization does not have valid client id or client secret")
-var ErrCreateAuthRequest = errors.New("failed to generate a new http request for authorization")
-var ErrRequest = errors.New("authorization request to spotify failed")
-var ErrDecode = errors.New("failed to decode authorization from json")
-var ErrEncode = errors.New("failed to encode authorization to json")
-var ErrTokenDecode = errors.New("failed to decode authorization token from json")
-var ErrTokenEncode = errors.New("failed to encode authorization token to json")
-var ErrTokenMissing = errors.New("authorization token is empty after decode")
 
 type Auth struct {
 	Id           string    `json:"id"`
@@ -47,7 +37,6 @@ func NewAuth(id string, secret string) *Auth {
 }
 
 func (a *Auth) NewAuthRequest() *http.Request {
-
 	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token?grant_type=client_credentials", nil)
 	if err != nil {
 		return nil
@@ -58,7 +47,6 @@ func (a *Auth) NewAuthRequest() *http.Request {
 	}
 	req.SetBasicAuth(a.Id, a.Secret)
 	return req
-
 }
 
 func (a *Auth) Authorize() {
