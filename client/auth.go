@@ -112,7 +112,7 @@ func (a *Auth) NewAuthRequest() *http.Request {
 }
 
 func (a *Auth) Authorize() {
-	token := a.GetToken()
+	token := a.getToken()
 	a.AccessToken = token
 	a.AuthorizedAt = (time.Now())
 }
@@ -123,7 +123,7 @@ func (a *Auth) MaybeRefresh() {
 	}
 }
 
-func (a *Auth) GetToken() string {
+func (a *Auth) getToken() string {
 	req := a.NewAuthRequest()
 
 	res, err := http.DefaultClient.Do(req)
