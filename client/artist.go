@@ -6,13 +6,9 @@ type ArtistsResponse struct {
 }
 
 type ArtistsBody struct {
-	//Href    string   `json:"href"`
 	Artists []Artist `json:"items"`
-	//Next    string   `json:"next"`
-	//Limit   int      `json:"limit"`
-	//Offset  int      `json:"offset"`
-	Total  int `json:"total"`
-	Length int `json:"length"`
+	Total   int      `json:"total"`
+	Length  int      `json:"length"`
 }
 
 type Artist struct {
