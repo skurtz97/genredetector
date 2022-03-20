@@ -1,9 +1,5 @@
 package client
 
-import (
-	"sort"
-)
-
 // response
 type ArtistsResponse struct {
 	*ArtistsBody `json:"artists"`
@@ -34,42 +30,6 @@ type ExternalUrls struct {
 
 type Followers struct {
 	Total int `json:"total"`
-}
-
-type ByArtist func(a1, a2 *Artist) bool
-
-type ArtistsSorter struct {
-	Artists []Artist
-	By      ByArtist
-}
-
-func (as *ArtistsSorter) Len() int {
-	return len(as.Artists)
-}
-
-func (as *ArtistsSorter) Swap(i, j int) {
-	as.Artists[i], as.Artists[j] = as.Artists[j], as.Artists[i]
-}
-
-func (as *ArtistsSorter) Less(i, j int) bool {
-	return as.By(&as.Artists[i], &as.Artists[j])
-}
-
-func (by ByArtist) Sort(artists []Artist) {
-	as := &ArtistsSorter{
-		Artists: artists,
-		By:      by,
-	}
-	sort.Sort(as)
-}
-
-// returns a new copy of artists but sorted on popularity in descending order
-func SortArtists(artists []Artist) []Artist {
-	popDesc := func(a1, a2 *Artist) bool {
-		return a1.Popularity > a2.Popularity
-	}
-	ByArtist(popDesc).Sort(artists)
-	return artists
 }
 
 // returns true if the genres slice contains the specified genre

@@ -6,6 +6,7 @@ import (
 	"genredetector/util"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 
@@ -93,7 +94,9 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 		client.SortGenres(genre, artists)
 	}
 
-	artists = client.SortArtists(artists)
+	sort.Slice(artists, func(i, j int) bool {
+		return artists[i].Popularity > artists[j].Popularity
+	})
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
 	err = jsoniter.NewEncoder(w).Encode(client.ArtistsBody{
@@ -166,7 +169,10 @@ func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
-	artists = client.SortArtists(artists)
+	sort.Slice(artists, func(i, j int) bool {
+		return artists[i].Popularity > artists[j].Popularity
+	})
+
 	lg.Printf("sending %d/%d artists to client", len(artists), total)
 
 	err = jsoniter.NewEncoder(w).Encode(client.ArtistsBody{
