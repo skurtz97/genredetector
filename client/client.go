@@ -71,57 +71,6 @@ func (c *Client) NewSearch(query string, kind RequestKind, offset int) (*http.Re
 	return req, nil
 }
 
-/*
-func (c *Client) NewGenreSearch(genre string, offset int) (*http.Request, error) {
-	url := "https://api.spotify.com/v1/search?q=genre:" + genre + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, ErrCreateAuthRequest
-	}
-	req.Header = getRequestHeader(c.AccessToken)
-	return req, nil
-}
-func (c *Client) NewArtistSearch(artist string, offset int) (*http.Request, error) {
-	url := "https://api.spotify.com/v1/search?q=artist:" + artist + "&type=artist&limit=50&offset=" + fmt.Sprint(offset)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, ErrCreateAuthRequest
-	}
-	req.Header = getRequestHeader(c.AccessToken)
-	return req, nil
-}
-
-func (c *Client) NewArtistIdSearch(id string) (*http.Request, error) {
-	url := "https://api.spotify.com/v1/artists/" + id
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, ErrCreateAuthRequest
-	}
-	req.Header = getRequestHeader(c.AccessToken)
-	return req, nil
-}
-
-func (c *Client) NewTrackIdSearch(id string) (*http.Request, error) {
-	url := "https://api.spotify.com/v1/tracks/" + id
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, ErrCreateAuthRequest
-	}
-	req.Header = getRequestHeader(c.AccessToken)
-	return req, nil
-}
-
-func (c *Client) NewTrackSearch(track string, offset int) (*http.Request, error) {
-	url := "https://api.spotify.com/v1/search?q=track:" + track + "&type=track&limit=50&offset=" + fmt.Sprint(offset)
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, ErrCreateAuthRequest
-	}
-	req.Header = getRequestHeader(c.AccessToken)
-	return req, nil
-}
-*/
-
 func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 	res, err := c.Do(r)
 	if err != nil {
