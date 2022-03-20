@@ -2,7 +2,6 @@ package client
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,14 +9,6 @@ import (
 	"strings"
 	"time"
 )
-
-var ErrEnv = errors.New("client id and client secret environment variables missing")
-var ErrCreateRequest = errors.New("failed to create a new search request")
-var ErrGenreSearch = errors.New("failed doing genre search")
-var ErrArtistSearch = errors.New("failed doing artist search")
-var ErrArtistIdSearch = errors.New("failed doing artist id search")
-var ErrTrackSearch = errors.New("failed doing track search")
-var ErrTrackIdSearch = errors.New("failed doing track id search")
 
 type Client struct {
 	*http.Client
@@ -50,7 +41,7 @@ func (c *Client) NewSearch(query string, kind RequestKind, offset int) (*http.Re
 	var err error
 	switch kind {
 	case GENRE:
-		req, err = http.NewRequest("GET", "https://api.spotify.com/v1/search?q=genre:"+query+"&type=artist&limit=50&offset="+fmt.Sprint(offset), nil)
+		req, err = http.NewRequest("GET", "https://api.spotify.com/v1/search?q=:"+query+"&type=artist&limit=50&offset="+fmt.Sprint(offset), nil)
 		req.Header = header
 	case ARTIST:
 		req, err = http.NewRequest("GET", "https://api.spotify.com/v1/search?q=artist:"+query+"&type=artist&limit=50&offset="+fmt.Sprint(offset), nil)
@@ -74,7 +65,7 @@ func (c *Client) NewSearch(query string, kind RequestKind, offset int) (*http.Re
 func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrArtistIdSearch
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -91,7 +82,7 @@ func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrArtistSearch
+		return nil, err
 	}
 	defer res.Body.Close()
 	sr := new(ArtistsResponse)
@@ -105,7 +96,7 @@ func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
 func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrGenreSearch
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -121,7 +112,7 @@ func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrTrackSearch
+		return nil, err
 	}
 
 	defer res.Body.Close()
@@ -137,7 +128,7 @@ func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
 func (c *Client) TrackIdSearch(r *http.Request) (*Track, error) {
 	res, err := c.Do(r)
 	if err != nil {
-		return nil, ErrTrackSearch
+		return nil, err
 	}
 	defer res.Body.Close()
 	sr := new(Track)
