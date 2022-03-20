@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"genredetector/client"
+	"genredetector/util"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,6 +12,29 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 )
+
+type SearchKind int
+
+const (
+	Genre SearchKind = iota
+	Artist
+	Track
+)
+
+func getTotal(total int) int {
+	if total > 1000 {
+		return 1000
+	} else {
+		return total
+	}
+}
+func getNumRequests(total int) int {
+	if (total / 50) > 19 {
+		return 19
+	} else {
+		return (total / 50)
+	}
+}
 
 func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	c.MaybeRefresh()
@@ -81,6 +105,18 @@ func GenreSearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func formatQueryString(genre string) string {
+	genre = strings.Trim(genre, " +%20")
+	if strings.ContainsAny(genre, " ") && !(strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
+		genre = "\"" + genre + "\""
+	} else if !strings.ContainsAny(genre, " ") && (strings.HasPrefix(genre, "\"") && strings.HasSuffix(genre, "\"")) {
+		genre = strings.Trim(genre, "\"")
+	}
+	genre = strings.ToLower(genre)
+	genre = url.QueryEscape(genre)
+	return genre
 }
 
 func ArtistSearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +234,7 @@ func TrackSearchHandler(w http.ResponseWriter, r *http.Request) {
 		Length: len(tracks),
 		Tracks: tracks,
 	}
-	err = body.ToJSON(w)
+	err = util.ToJSON(w, &body)
 
 }
 
@@ -216,7 +252,7 @@ func ArtistIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	err = res.ToJSON(w)
+	err = util.ToJSON(w, res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -234,27 +270,27 @@ func TrackIdSearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	err = res.ToJSON(w)
+	err = util.ToJSON(w, res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func NewIdSearchHandler(t SearchType) http.HandlerFunc {
+func NewIdSearchHandler(kind SearchKind) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c.MaybeRefresh()
 		id := mux.Vars(r)["id"]
 		fmt.Println(id)
 		id = strings.Trim(id, " ")
-		switch t {
+		switch kind {
 		case Artist:
 			req, _ := c.NewSearch(id, client.ARTIST_ID, 0)
 			res, _ := c.ArtistIdSearch(req)
-			_ = res.ToJSON(w)
+			_ = util.ToJSON(w, &res)
 		case Track:
 			req, _ := c.NewSearch(id, client.TRACK_ID, 0)
 			res, _ := c.TrackIdSearch(req)
-			_ = res.ToJSON(w)
+			_ = util.ToJSON(w, &res)
 		default:
 			http.Error(w, "invalid search type", http.StatusBadRequest)
 		}

@@ -3,6 +3,7 @@ package client
 import (
 	"bufio"
 	"fmt"
+	"genredetector/util"
 	"log"
 	"net/http"
 	"os"
@@ -70,7 +71,7 @@ func (c *Client) ArtistIdSearch(r *http.Request) (*Artist, error) {
 	defer res.Body.Close()
 
 	sr := new(Artist)
-	err = sr.FromJSON(res.Body)
+	err = util.FromJSON(res.Body, &sr)
 
 	if err != nil {
 		return nil, err
@@ -86,7 +87,7 @@ func (c *Client) ArtistSearch(r *http.Request) (*ArtistsResponse, error) {
 	}
 	defer res.Body.Close()
 	sr := new(ArtistsResponse)
-	err = sr.FromJSON(res.Body)
+	err = util.FromJSON(res.Body, &sr)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +102,7 @@ func (c *Client) GenreSearch(r *http.Request) (*ArtistsResponse, error) {
 	defer res.Body.Close()
 
 	sr := new(ArtistsResponse)
-	err = sr.FromJSON(res.Body)
+	err = util.FromJSON(res.Body, &sr)
 
 	if err != nil {
 		return nil, err
@@ -117,9 +118,9 @@ func (c *Client) TrackSearch(r *http.Request) (*TracksResponse, error) {
 
 	defer res.Body.Close()
 	sr := new(TracksResponse)
-	err = sr.FromJSON(res.Body)
+	err = util.FromJSON(res.Body, &sr)
 	if err != nil {
-		return nil, ErrDecodeTrackResponse
+		return nil, err
 	}
 
 	return sr, nil
@@ -132,9 +133,9 @@ func (c *Client) TrackIdSearch(r *http.Request) (*Track, error) {
 	}
 	defer res.Body.Close()
 	sr := new(Track)
-	err = sr.FromJSON(res.Body)
+	err = util.FromJSON(res.Body, &sr)
 	if err != nil {
-		return nil, ErrDecodeTrack
+		return nil, err
 	}
 	return sr, nil
 }
