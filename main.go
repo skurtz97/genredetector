@@ -1,13 +1,10 @@
 package main
 
 import (
-	"errors"
 	"genredetector/server"
 	"log"
 	"os"
 )
-
-var ErrParseForm = errors.New("error parsing incoming request form")
 
 func main() {
 	port := os.Getenv("PORT")
