@@ -23,7 +23,6 @@ func (a *Auth) ShouldRefresh() bool {
 }
 
 func NewAuth(id string, secret string) *Auth {
-
 	if id == "" || secret == "" {
 		panic("id or secret missing")
 	}

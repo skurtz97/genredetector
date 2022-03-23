@@ -15,8 +15,6 @@ var (
 	lg *log.Logger
 )
 
-// panic if we can't initialize the client
-// most likely Go can't find our id or secret, so check the environment variables
 func init() {
 	c = client.New()
 	if c == nil {
