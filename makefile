@@ -5,7 +5,6 @@ all: clean build run
 
 build:
 	cd server; \
-	cp ./config.json ~/.config/genredetector/config.json; \
 	go build -o ../bin/genredetector; \
 	cd .. 
 
