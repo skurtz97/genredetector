@@ -19,8 +19,19 @@ func method(method string, next http.HandlerFunc) http.HandlerFunc {
 	}
 	return http.HandlerFunc(fn)
 }
+func get(next http.HandlerFunc) http.HandlerFunc {
+	return method(http.MethodGet, next)
+}
+func post(next http.HandlerFunc) http.HandlerFunc {
+	return method(http.MethodPost, next)
+}
+func put(next http.HandlerFunc) http.HandlerFunc {
+	return method(http.MethodPut, next)
+}
+func delete(next http.HandlerFunc) http.HandlerFunc {
+	return method(http.MethodDelete, next)
+}
 
-// logging middleware, prints method, url, and elapsed time
 func logging(next http.HandlerFunc) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -31,7 +42,19 @@ func logging(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(fn)
 }
 
-// echoes the request body back as a response
+func recovery(next http.HandlerFunc) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("panic: %+v", err)
+				http.Error(w, http.StatusText(500), 500)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
+}
+
 func HandleEcho(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
